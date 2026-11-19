@@ -5,7 +5,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>총괄평가 성취수준(A·B·C·D) 채점 · 피드백 및 통계 시스템</title>
   <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
   <style>
     :root {
       --primary: #2563eb;
@@ -358,6 +357,30 @@
     tbody tr.absent-row { background-color: #e2e8f0 !important; color: var(--gray-500); }
     tbody tr.transfer-row { background-color: #f1f5f9 !important; color: var(--gray-500); font-style: italic; }
 
+    /* 보고서형 통계 전용 스타일 */
+    .report-stats-wrap {
+      max-width: 680px;
+      border: 1.5px solid #334155;
+      border-radius: 6px;
+      overflow-x: auto;
+      background: #ffffff;
+    }
+    .report-stats-table th,
+    .report-stats-table td {
+      border: 1px solid #475569;
+      padding: 10px 14px;
+      font-size: 0.95rem;
+    }
+    .report-stats-table thead tr:last-child th {
+      border-bottom: 3px double #334155;
+    }
+    .report-stats-table tbody tr {
+      background-color: #ffffff !important;
+    }
+    .report-stats-table tbody tr:hover {
+      background-color: #f8fafc !important;
+    }
+
     .status-pill {
       display: inline-flex;
       align-items: center;
@@ -553,31 +576,17 @@
       text-align: left;
     }
 
-    /* QR 코드 영역 */
-    .qr-result-box {
+    /* 모바일 조회 링크 안내 박스 */
+    .lookup-link-box {
       margin-top: 12px;
       padding: 16px;
-      border: 1px solid var(--gray-200);
+      border: 1px solid #bfdbfe;
       border-radius: 10px;
-      background: var(--gray-50);
+      background: var(--primary-light);
       display: none;
     }
-    .qr-result-box.active {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 18px;
-      align-items: center;
-    }
-    #qrcodeCanvasWrap {
-      background: #ffffff;
-      padding: 12px;
-      border-radius: 8px;
-      border: 1px solid var(--gray-200);
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      min-width: 190px;
-      min-height: 190px;
+    .lookup-link-box.active {
+      display: block;
     }
 
     /* 모바일 조회 전용 화면 */
@@ -674,13 +683,13 @@
     <div class="header-sub">
       <span class="maker-badge">만든 사람 : 은두리</span>
       <span id="roleStatusBadge" class="role-pill">역할 미선택</span>
-      <span>문항정보표 · 피드백 자동 조합 · 미응시/전학 통계 · 모바일 QR 조회</span>
+      <span>문항정보표 · 피드백 자동 조합 · 미응시/전학 통계 · 모바일 조회 링크</span>
     </div>
   </div>
   <div class="header-actions" id="desktopHeaderActions">
     <button onclick="openRoleGate()">🔄 대표/비대표 선택</button>
     <button id="headerDownloadCriteriaBtn" class="btn-primary" onclick="downloadCriteriaJSON()" style="display:none;">📤 기준 설정 다운로드</button>
-    <button class="btn-success" onclick="openQrGeneratorFromAny()">📱 모바일 조회용 QR</button>
+    <button class="btn-success" onclick="openLookupLinkFromAny()">🔗 모바일 조회 링크 복사</button>
     <button onclick="exportBackupJSON()">💾 전체 백업</button>
     <button onclick="document.getElementById('backupFileInput').click()">📂 백업 불러오기</button>
     <input type="file" id="backupFileInput" class="file-input-hidden" accept=".json" onchange="importBackupJSON(event)" />
@@ -688,7 +697,7 @@
   </div>
 </header>
 
-<!-- 모바일 QR 링크 접속 시 전용 조회 화면 -->
+<!-- 모바일 조회 링크 접속 시 전용 조회 화면 -->
 <section id="mobileViewerSection" class="mobile-viewer-wrap">
   <div class="card">
     <div class="card-header">
@@ -699,7 +708,7 @@
 
     <div class="sub-tabs">
       <button class="sub-tab-btn active" id="mTabStudentBtn" onclick="switchMobileViewTab('student')">학생별 조회</button>
-      <button class="sub-tab-btn" id="mTabStatsBtn" onclick="switchMobileViewTab('stats')">과목별 통계</button>
+      <button class="sub-tab-btn" id="mTabStatsBtn" onclick="switchMobileViewTab('stats')">성취수준 통계</button>
     </div>
 
     <div id="mobileStudentView">
@@ -763,7 +772,7 @@
     <button class="tab-btn active" data-tab="tab1" onclick="switchTab('tab1')">1단계. 과목 · 문항 수 · 피드백 · 성취율 설정</button>
     <button class="tab-btn" data-tab="tab2" onclick="switchTab('tab2')">2단계. 명단 · 문항정보표 · 피드백 관리</button>
     <button class="tab-btn" data-tab="tab3" onclick="switchTab('tab3')">3단계. 문항별 채점 입력</button>
-    <button class="tab-btn" data-tab="tab4" onclick="switchTab('tab4')">4단계. 종합 결과 · 통계 · 엑셀 · QR</button>
+    <button class="tab-btn" data-tab="tab4" onclick="switchTab('tab4')">4단계. 종합 결과 · 통계 · 엑셀 · 조회링크</button>
   </nav>
 
   <!-- ==================== 1단계: 기본 설정 ==================== -->
@@ -891,7 +900,7 @@
         </div>
       </div>
       <p class="card-desc">
-        양식 다운로드 시 <strong>1번~30번</strong>이 기본으로 나오며, 남는 행은 지우고 명단만 넣으면 됩니다. 응시여부 열에 <strong><code>미응시</code></strong> 또는 <strong><code>전학</code></strong>을 적으면 자동 반영됩니다. (<strong>전학</strong> 학생은 통계 인원/비율 분모에서 제외)
+        양식 다운로드 시 <strong>1번~30번</strong>이 기본으로 나오며, 남는 행은 지우고 명단만 넣으면 됩니다. 응시여부 열에 <strong><code>미응시</code></strong> 또는 <strong><code>전학</code></strong>을 적으면 자동 반영됩니다. (<strong>전학</strong> 학생은 통계의 총학생수에서 제외)
       </p>
       <div class="table-wrap" style="max-height: 420px;">
         <table>
@@ -946,66 +955,64 @@
     </div>
   </section>
 
-  <!-- ==================== 4단계: 종합 결과 · 통계 · 엑셀 · QR ==================== -->
+  <!-- ==================== 4단계: 종합 결과 · 통계 · 엑셀 · 조회링크 ==================== -->
   <section id="tab4" class="tab-panel">
     <div class="card">
       <div class="card-header">
-        <h2>4-1. 메일머지용 · 성취수준(A·B·C·D) 통계 엑셀 추출 &amp; 모바일 조회용 QR</h2>
+        <h2>4-1. 메일머지용 · 성취수준 통계 엑셀 추출 &amp; 모바일 조회 링크</h2>
       </div>
       <div class="toolbar">
         <div class="toolbar-group">
-          <strong>메일머지 포함 항목:</strong>
-          <label><input type="checkbox" checked disabled /> 번호·이름</label>
-          <label><input type="checkbox" checked disabled /> 과목별 등급</label>
-          <label><input type="checkbox" id="mmIncludeScore" checked /> 과목별 원점수 포함</label>
-          <label><input type="checkbox" id="mmIncludeRate" /> 과목별 성취율(%) 포함</label>
+          <strong>메일머지 열 순서:</strong>
+          <label><input type="checkbox" checked disabled /> ① 번호·이름</label>
+          <label><input type="checkbox" checked disabled /> ② 등급</label>
           <label id="mmFeedbackBadge" style="display:none; color:var(--primary); font-weight:700;">
-            <input type="checkbox" checked disabled /> 과목별 피드백 자동 포함
+            <input type="checkbox" checked disabled /> ③ 피드백
           </label>
+          <label><input type="checkbox" id="mmIncludeRate" /> 성취율(%)</label>
+          <label><input type="checkbox" id="mmIncludeScore" checked /> 마지막: 점수</label>
         </div>
         <div class="toolbar-group">
           <button class="btn-primary" onclick="exportMailMergeExcel()">📄 메일머지용 엑셀 다운로드 (.xlsx)</button>
-          <button class="btn-success" onclick="exportStatsExcel()">📊 A·B·C·D 통계 엑셀 다운로드 (.xlsx)</button>
-          <button class="btn-primary" onclick="generateMobileLookupQR()">📱 모바일 조회용 QR 만들기</button>
+          <button class="btn-success" onclick="exportStatsExcel()">📊 성취수준 통계 엑셀 다운로드 (.xlsx)</button>
+          <button class="btn-primary" onclick="generateAndCopyMobileLookupLink()">🔗 모바일 조회 링크 생성·복사</button>
         </div>
       </div>
 
-      <div id="qrResultBox" class="qr-result-box">
-        <div id="qrcodeCanvasWrap"></div>
-        <div style="flex:1; min-width:240px;">
-          <h3 style="margin:0 0 6px; font-size:1rem;">📱 스마트폰으로 스캔하거나 링크를 열어 조회하세요</h3>
-          <p style="margin:0 0 8px; font-size:0.84rem; color:var(--gray-700);">
-            외부 서버 없이 링크 주소에 조회용 데이터가 담깁니다. 폰에서 열면 파일 업로드 없이 바로 <strong>통계</strong>와 <strong>학생별 점수·틀린 문항·피드백</strong>을 볼 수 있습니다.
-          </p>
-          <div style="display:flex; flex-wrap:wrap; gap:8px; margin-bottom:8px;">
-            <button class="btn-sm btn-primary" onclick="copyLookupUrl()">🔗 조회 링크 복사</button>
-            <a id="directLookupLink" href="#" target="_blank" class="btn btn-sm btn-success" style="text-decoration:none;">새 창에서 조회 화면 미리보기</a>
+      <div id="lookupLinkBox" class="lookup-link-box">
+        <div style="display:flex; flex-wrap:wrap; justify-content:space-between; align-items:center; gap:10px;">
+          <div>
+            <strong style="font-size:0.96rem;">📱 모바일 조회용 링크가 생성되었습니다</strong>
+            <div class="helper-text" style="margin-top:2px;">
+              카톡 '나에게 보내기' 등에 붙여넣어 스마트폰에서 열면 파일 업로드 없이 바로 <strong>통계</strong>와 <strong>학생별 점수·틀린 문항·피드백</strong>을 볼 수 있습니다.
+            </div>
           </div>
-          <div id="qrLengthNotice" class="helper-text"></div>
+          <div style="display:flex; flex-wrap:wrap; gap:8px;">
+            <button class="btn-sm btn-primary" onclick="copyLookupUrl()">📋 링크 다시 복사</button>
+            <a id="directLookupLink" href="#" target="_blank" class="btn btn-sm btn-success" style="text-decoration:none;">새 창에서 조회 화면 열기</a>
+          </div>
         </div>
       </div>
     </div>
 
     <div class="card">
       <div class="card-header">
-        <h2>4-2. 과목별 성취수준(A·B·C·D) 통계 (응시자 기준 정수 비율 · 전학 제외 · 미응시 별도 집계)</h2>
+        <h2>4-2. 과목별 성취수준 통계</h2>
       </div>
-      <p class="card-desc">등급 비율(%)은 <strong>실제 응시 인원</strong>을 분모로 산출되며, <strong>전학</strong> 학생은 통계 분모에서 제외됩니다.</p>
-      <div class="table-wrap">
-        <table>
+      <p class="card-desc">총학생수는 <strong>전학 학생을 제외한 재적 인원</strong>이며, 과목별 <strong>응시학생수/총학생수</strong>와 성취도별 학생수(<strong>A·B·C·D</strong>)가 표시됩니다.</p>
+      <div class="report-stats-wrap">
+        <table class="report-stats-table">
           <thead>
             <tr>
-              <th>과목</th>
-              <th>만점</th>
-              <th>재적(전학제외)</th>
-              <th>응시 인원</th>
-              <th>미응시</th>
-              <th>전학</th>
-              <th>응시 평균</th>
-              <th>A 등급</th>
-              <th>B 등급</th>
-              <th>C 등급</th>
-              <th>D 등급</th>
+              <th rowspan="2" style="width:150px;">응시학생수/<br/>총학생수</th>
+              <th rowspan="2" style="width:110px;">과목</th>
+              <th colspan="4">성취도별 학생수</th>
+            </tr>
+            <tr>
+              <th style="width:85px;">A</th>
+              <th style="width:85px;">B</th>
+              <th style="width:85px;">C</th>
+              <th style="width:85px;">D</th>
             </tr>
           </thead>
           <tbody id="statsTableBody"></tbody>
@@ -1051,24 +1058,28 @@
   const SUBJECTS = ['국어', '수학', '사회', '과학', '영어'];
   const STORAGE_KEY = 'summative_eval_app_v6';
 
-  let state = {
-    role: null,
-    feedbackEnabled: false,
-    subjects: {
-      '국어': { enabled: true, count: 20, questions: [], perfectFeedback: '' },
-      '수학': { enabled: true, count: 20, questions: [], perfectFeedback: '' },
-      '사회': { enabled: false, count: 20, questions: [], perfectFeedback: '' },
-      '과학': { enabled: false, count: 20, questions: [], perfectFeedback: '' },
-      '영어': { enabled: false, count: 20, questions: [], perfectFeedback: '' }
-    },
-    cutlines: { A: 90, B: 80, C: 70 },
-    students: [],
-    scores: {},
-    activeQEditorSubject: '국어',
-    activeFbEditorSubject: '국어',
-    activeGradingSubject: '국어'
-  };
+  function getDefaultState() {
+    return {
+      role: null,
+      activeTab: 'tab1',
+      feedbackEnabled: false,
+      subjects: {
+        '국어': { enabled: true, count: 20, questions: [], perfectFeedback: '' },
+        '수학': { enabled: true, count: 20, questions: [], perfectFeedback: '' },
+        '사회': { enabled: false, count: 20, questions: [], perfectFeedback: '' },
+        '과학': { enabled: false, count: 20, questions: [], perfectFeedback: '' },
+        '영어': { enabled: false, count: 20, questions: [], perfectFeedback: '' }
+      },
+      cutlines: { A: 90, B: 80, C: 70 },
+      students: [],
+      scores: {},
+      activeQEditorSubject: '국어',
+      activeFbEditorSubject: '국어',
+      activeGradingSubject: '국어'
+    };
+  }
 
+  let state = getDefaultState();
   let mobileLookupData = null;
   let selectedMobileStudentId = null;
   let latestLookupUrl = '';
@@ -1108,7 +1119,43 @@
     }));
   }
 
-  // URL 해시에 담긴 모바일 조회용 데이터 파싱
+  function mergeSavedState(parsed) {
+    const fresh = getDefaultState();
+    if (!parsed || typeof parsed !== 'object') return fresh;
+
+    fresh.role = parsed.role || null;
+    fresh.activeTab = parsed.activeTab || 'tab1';
+    fresh.feedbackEnabled = Boolean(parsed.feedbackEnabled);
+
+    if (parsed.cutlines && typeof parsed.cutlines === 'object') {
+      fresh.cutlines = {
+        A: Math.round(Number(parsed.cutlines.A)) || 90,
+        B: Math.round(Number(parsed.cutlines.B)) || 80,
+        C: Math.round(Number(parsed.cutlines.C)) || 70
+      };
+    }
+
+    if (parsed.subjects && typeof parsed.subjects === 'object') {
+      SUBJECTS.forEach(sub => {
+        if (parsed.subjects[sub]) {
+          fresh.subjects[sub] = Object.assign({}, fresh.subjects[sub], parsed.subjects[sub]);
+        }
+      });
+    }
+
+    if (Array.isArray(parsed.students)) {
+      fresh.students = parsed.students;
+    }
+    if (parsed.scores && typeof parsed.scores === 'object') {
+      fresh.scores = parsed.scores;
+    }
+    if (parsed.activeQEditorSubject) fresh.activeQEditorSubject = parsed.activeQEditorSubject;
+    if (parsed.activeFbEditorSubject) fresh.activeFbEditorSubject = parsed.activeFbEditorSubject;
+    if (parsed.activeGradingSubject) fresh.activeGradingSubject = parsed.activeGradingSubject;
+
+    return fresh;
+  }
+
   function tryLoadMobileLookupFromHash() {
     const h = window.location.hash || '';
     if (!h.startsWith('#view=')) return false;
@@ -1149,15 +1196,15 @@
     const saved = localStorage.getItem(STORAGE_KEY);
     if (saved) {
       try {
-        const parsed = JSON.parse(saved);
-        state = Object.assign(state, parsed);
+        state = mergeSavedState(JSON.parse(saved));
       } catch (e) {
         console.error('저장 데이터 파싱 오류:', e);
+        state = getDefaultState();
       }
     }
 
     SUBJECTS.forEach(sub => {
-      if (!state.subjects[sub].questions || state.subjects[sub].questions.length === 0) {
+      if (!Array.isArray(state.subjects[sub].questions) || state.subjects[sub].questions.length === 0) {
         state.subjects[sub].questions = createDefaultQuestions(state.subjects[sub].count);
       } else {
         state.subjects[sub].questions.forEach(q => {
@@ -1169,7 +1216,7 @@
       }
     });
 
-    if (!state.students || state.students.length === 0) {
+    if (!Array.isArray(state.students) || state.students.length === 0) {
       state.students = createDefaultStudents();
     } else {
       state.students.forEach(s => {
@@ -1179,6 +1226,7 @@
     }
 
     syncAllStudentScores();
+    applyActiveTabUI(state.activeTab || 'tab1');
     updateRoleView();
     renderAll();
   }
@@ -1286,72 +1334,86 @@
   function renderMobileStatsCards() {
     if (!mobileLookupData) return;
     const wrap = document.getElementById('mobileStatsCards');
-    wrap.innerHTML = mobileLookupData.stats.map(st => `
-      <div class="mobile-subj-box">
-        <div style="font-size:1rem; font-weight:800; margin-bottom:6px;">
-          ${st.sub} (만점 ${st.maxScore}점 · 응시 ${st.attended}명 · 평균 ${st.avg}점)
-        </div>
-        <div style="display:flex; flex-wrap:wrap; gap:6px; font-size:0.85rem;">
-          <span class="grade-badge grade-A">A ${st.counts.A}명(${st.rates.A}%)</span>
-          <span class="grade-badge grade-B">B ${st.counts.B}명(${st.rates.B}%)</span>
-          <span class="grade-badge grade-C">C ${st.counts.C}명(${st.rates.C}%)</span>
-          <span class="grade-badge grade-D">D ${st.counts.D}명(${st.rates.D}%)</span>
-        </div>
-        <div class="helper-text" style="margin-top:6px;">미응시 ${st.absent}명 · 전학 ${st.transferred}명</div>
+    wrap.innerHTML = `
+      <div class="report-stats-wrap">
+        <table class="report-stats-table">
+          <thead>
+            <tr>
+              <th rowspan="2">응시학생수/<br/>총학생수</th>
+              <th rowspan="2">과목</th>
+              <th colspan="4">성취도별 학생수</th>
+            </tr>
+            <tr>
+              <th>A</th>
+              <th>B</th>
+              <th>C</th>
+              <th>D</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${mobileLookupData.stats.map(st => `
+              <tr>
+                <td><strong>${st.attended}/${st.enrolled}</strong></td>
+                <td><strong>${st.sub}</strong></td>
+                <td>${st.counts.A}</td>
+                <td>${st.counts.B}</td>
+                <td>${st.counts.C}</td>
+                <td>${st.counts.D}</td>
+              </tr>
+            `).join('')}
+          </tbody>
+        </table>
       </div>
-    `).join('');
+    `;
   }
 
-  // ==================== QR 생성 (외부 서버 없이 URL 해시에 압축 저장) ====================
-  function openQrGeneratorFromAny() {
+  // ==================== 모바일 조회 링크 생성 및 복사 ====================
+  function openLookupLinkFromAny() {
     if (!state.role) {
       state.role = 'rep';
       saveState();
       updateRoleView();
     }
     switchTab('tab4');
-    generateMobileLookupQR();
+    generateAndCopyMobileLookupLink();
   }
 
-  function generateMobileLookupQR() {
+  function buildMobileLookupUrl() {
     const enabled = getEnabledSubjects();
     const payload = {
       stats: enabled.map(sub => computeSubjectStats(sub)),
-      students: state.students.map(stu => {
-        const stStatus = normalizeStudentStatus(stu);
-        return {
-          id: stu.id,
-          num: stu.num,
-          name: stu.name,
-          subjects: enabled.map(sub => {
-            const res = getStudentSubjectResult(stu, sub);
-            if (res.transferred) {
-              return { sub, status: 'transferred' };
-            }
-            if (res.absent) {
-              return { sub, status: 'absent' };
-            }
-            const qs = state.subjects[sub].questions;
-            const items = state.scores[stu.id]?.[sub]?.items || [];
-            const wrongSummary = [];
-            qs.forEach((q, idx) => {
-              const earned = Number(items[idx]) || 0;
-              if (earned === 0) wrongSummary.push(`${q.num}번(0점)`);
-              else if (earned < q.points) wrongSummary.push(`${q.num}번(${earned}/${q.points}점)`);
-            });
-            return {
-              sub,
-              status: 'ok',
-              score: res.score,
-              maxScore: res.maxScore,
-              rate: res.rate,
-              grade: res.grade,
-              wrongSummary,
-              feedback: state.feedbackEnabled ? getStudentSubjectFeedback(stu, sub) : ''
-            };
-          })
-        };
-      })
+      students: state.students.map(stu => ({
+        id: stu.id,
+        num: stu.num,
+        name: stu.name,
+        subjects: enabled.map(sub => {
+          const res = getStudentSubjectResult(stu, sub);
+          if (res.transferred) {
+            return { sub, status: 'transferred' };
+          }
+          if (res.absent) {
+            return { sub, status: 'absent' };
+          }
+          const qs = state.subjects[sub].questions;
+          const items = state.scores[stu.id]?.[sub]?.items || [];
+          const wrongSummary = [];
+          qs.forEach((q, idx) => {
+            const earned = Number(items[idx]) || 0;
+            if (earned === 0) wrongSummary.push(`${q.num}번(0점)`);
+            else if (earned < q.points) wrongSummary.push(`${q.num}번(${earned}/${q.points}점)`);
+          });
+          return {
+            sub,
+            status: 'ok',
+            score: res.score,
+            maxScore: res.maxScore,
+            rate: res.rate,
+            grade: res.grade,
+            wrongSummary,
+            feedback: state.feedbackEnabled ? getStudentSubjectFeedback(stu, sub) : ''
+          };
+        })
+      }))
     };
 
     const jsonStr = JSON.stringify(payload);
@@ -1362,43 +1424,23 @@
     }
     const b64 = btoa(binStr);
     const baseUrl = window.location.href.split('#')[0];
-    const fullUrl = `${baseUrl}#view=${encodeURIComponent(b64)}`;
-    latestLookupUrl = fullUrl;
+    return `${baseUrl}#view=${encodeURIComponent(b64)}`;
+  }
 
-    const box = document.getElementById('qrResultBox');
+  function generateAndCopyMobileLookupLink() {
+    latestLookupUrl = buildMobileLookupUrl();
+    const box = document.getElementById('lookupLinkBox');
     box.classList.add('active');
-    document.getElementById('directLookupLink').href = fullUrl;
-
-    const qrWrap = document.getElementById('qrcodeCanvasWrap');
-    qrWrap.innerHTML = '';
-
-    const notice = document.getElementById('qrLengthNotice');
-    if (fullUrl.length > 2600) {
-      notice.style.color = 'var(--danger)';
-      notice.textContent = `※ 현재 링크 길이(${fullUrl.length}자)가 길어 QR 밀도가 높을 수 있습니다. 카메라 인식이 어렵다면 [조회 링크 복사]로 보내 열어보세요.`;
-    } else {
-      notice.style.color = 'var(--gray-500)';
-      notice.textContent = `링크 길이: ${fullUrl.length}자 · 스마트폰 카메라로 QR을 스캔해 바로 조회할 수 있습니다.`;
-    }
-
-    if (typeof QRCode !== 'undefined') {
-      try {
-        new QRCode(qrWrap, {
-          text: fullUrl,
-          width: 176,
-          height: 176,
-          correctLevel: QRCode.CorrectLevel.L
-        });
-      } catch (e) {
-        qrWrap.innerHTML = `<span class="helper-text">데이터가 많아 QR 도형 생성을 생략했습니다. 아래 [조회 링크 복사]를 이용해 주세요.</span>`;
-      }
-    }
+    document.getElementById('directLookupLink').href = latestLookupUrl;
+    copyLookupUrl();
   }
 
   function copyLookupUrl() {
-    if (!latestLookupUrl) return;
+    if (!latestLookupUrl) {
+      latestLookupUrl = buildMobileLookupUrl();
+    }
     navigator.clipboard?.writeText(latestLookupUrl).then(() => {
-      alert('모바일 조회용 링크가 복사되었습니다!');
+      alert('모바일 조회용 링크가 복사되었습니다! 카톡 "나에게 보내기" 등에 붙여넣어 폰에서 열어보세요.');
     }).catch(() => {
       prompt('아래 링크를 복사해 주세요:', latestLookupUrl);
     });
@@ -1438,9 +1480,11 @@
 
   function selectRepresentativeRole() {
     state.role = 'rep';
+    state.activeTab = 'tab1';
     saveState();
+    applyActiveTabUI('tab1');
     updateRoleView();
-    switchTab('tab1');
+    renderAll();
   }
 
   function showNonRepresentativeBox() {
@@ -1449,9 +1493,11 @@
 
   function skipCriteriaToStudentList() {
     state.role = 'nonrep';
+    state.activeTab = 'tab2';
     saveState();
+    applyActiveTabUI('tab2');
     updateRoleView();
-    switchTab('tab2');
+    renderAll();
   }
 
   function downloadCriteriaJSON() {
@@ -1531,9 +1577,11 @@
         state.scores = {};
         syncAllStudentScores();
         state.role = 'nonrep';
+        state.activeTab = 'tab2';
         saveState();
+        applyActiveTabUI('tab2');
         updateRoleView();
-        switchTab('tab2');
+        renderAll();
         alert('기준 설정이 적용되었습니다! 우리 반 학생 명단을 입력하거나 업로드한 뒤 채점을 시작하세요.');
       } catch (err) {
         alert('기준 파일 불러오기 오류: ' + err.message);
@@ -1566,18 +1614,25 @@
     });
   }
 
-  function switchTab(tabId) {
+  function applyActiveTabUI(tabId) {
     document.querySelectorAll('.tab-btn').forEach(btn => {
       btn.classList.toggle('active', btn.dataset.tab === tabId);
     });
     document.querySelectorAll('.tab-panel').forEach(panel => {
       panel.classList.toggle('active', panel.id === tabId);
     });
+  }
+
+  function switchTab(tabId) {
+    state.activeTab = tabId;
+    saveState();
+    applyActiveTabUI(tabId);
     renderAll();
   }
 
   function getEnabledSubjects() {
-    return SUBJECTS.filter(s => state.subjects[s].enabled);
+    const enabled = SUBJECTS.filter(s => state.subjects[s].enabled);
+    return enabled.length > 0 ? enabled : ['국어'];
   }
 
   function getSubjectComposition(sub) {
@@ -1629,7 +1684,7 @@
   }
 
   function toggleSubject(sub) {
-    const enabledList = getEnabledSubjects();
+    const enabledList = SUBJECTS.filter(s => state.subjects[s].enabled);
     if (state.subjects[sub].enabled && enabledList.length <= 1) {
       alert('최소 1개 이상의 과목은 선택(O)되어야 합니다.');
       return;
@@ -2487,17 +2542,12 @@
       const st = computeSubjectStats(sub);
       return `
         <tr>
+          <td><strong>${st.attended}/${st.enrolled}</strong></td>
           <td><strong>${st.sub}</strong></td>
-          <td>${st.maxScore}점</td>
-          <td>${st.enrolled}명</td>
-          <td><strong>${st.attended}명</strong></td>
-          <td style="color:${st.absent > 0 ? 'var(--danger)' : 'inherit'}; font-weight:700;">${st.absent}명</td>
-          <td>${st.transferred}명</td>
-          <td>${st.attended > 0 ? st.avg + '점' : '-'}</td>
-          <td><span class="grade-badge grade-A">A</span> ${st.counts.A}명 (${st.rates.A}%)</td>
-          <td><span class="grade-badge grade-B">B</span> ${st.counts.B}명 (${st.rates.B}%)</td>
-          <td><span class="grade-badge grade-C">C</span> ${st.counts.C}명 (${st.rates.C}%)</td>
-          <td><span class="grade-badge grade-D">D</span> ${st.counts.D}명 (${st.rates.D}%)</td>
+          <td>${st.counts.A}</td>
+          <td>${st.counts.B}</td>
+          <td>${st.counts.C}</td>
+          <td>${st.counts.D}</td>
         </tr>
       `;
     }).join('');
@@ -2617,49 +2667,64 @@
   }
 
   // ==================== 엑셀 추출 ====================
+  // 열 순서: 번호, 이름 -> 등급 쭉 -> (피드백 쭉) -> (성취율 쭉) -> (점수 쭉, 가장 마지막)
   function exportMailMergeExcel() {
+    const enabled = getEnabledSubjects();
     const incScore = document.getElementById('mmIncludeScore').checked;
     const incRate = document.getElementById('mmIncludeRate').checked;
     const incFeedback = state.feedbackEnabled;
     const wb = XLSX.utils.book_new();
 
     const headers = ['번호', '이름'];
-    SUBJECTS.forEach(sub => {
-      if (incScore) headers.push(`${sub}_점수`);
-      if (incRate) headers.push(`${sub}_성취율`);
-      headers.push(`${sub}_등급`);
-      if (incFeedback) headers.push(`${sub}_피드백`);
-    });
+    enabled.forEach(sub => headers.push(`${sub}_등급`));
+    if (incFeedback) {
+      enabled.forEach(sub => headers.push(`${sub}_피드백`));
+    }
+    if (incRate) {
+      enabled.forEach(sub => headers.push(`${sub}_성취율`));
+    }
+    if (incScore) {
+      enabled.forEach(sub => headers.push(`${sub}_점수`));
+    }
 
     const rows = [headers];
     state.students.forEach(stu => {
       const row = [stu.num, stu.name];
-      SUBJECTS.forEach(sub => {
-        if (!state.subjects[sub].enabled) {
-          if (incScore) row.push('-');
-          if (incRate) row.push('-');
-          row.push('-');
-          if (incFeedback) row.push('-');
-        } else {
-          const res = getStudentSubjectResult(stu, sub);
-          if (res.transferred) {
-            if (incScore) row.push('전학');
-            if (incRate) row.push('전학');
-            row.push('전학');
-            if (incFeedback) row.push('전학');
-          } else if (res.absent) {
-            if (incScore) row.push('미응시');
-            if (incRate) row.push('미응시');
-            row.push('미응시');
-            if (incFeedback) row.push('미응시');
-          } else {
-            if (incScore) row.push(res.score);
-            if (incRate) row.push(res.rate + '%');
-            row.push(res.grade);
-            if (incFeedback) row.push(getStudentSubjectFeedback(stu, sub));
-          }
-        }
+      const subResults = enabled.map(sub => ({
+        sub,
+        res: getStudentSubjectResult(stu, sub)
+      }));
+
+      subResults.forEach(({ res }) => {
+        if (res.transferred) row.push('전학');
+        else if (res.absent) row.push('미응시');
+        else row.push(res.grade);
       });
+
+      if (incFeedback) {
+        subResults.forEach(({ sub, res }) => {
+          if (res.transferred) row.push('전학');
+          else if (res.absent) row.push('미응시');
+          else row.push(getStudentSubjectFeedback(stu, sub));
+        });
+      }
+
+      if (incRate) {
+        subResults.forEach(({ res }) => {
+          if (res.transferred) row.push('전학');
+          else if (res.absent) row.push('미응시');
+          else row.push(res.rate + '%');
+        });
+      }
+
+      if (incScore) {
+        subResults.forEach(({ res }) => {
+          if (res.transferred) row.push('전학');
+          else if (res.absent) row.push('미응시');
+          else row.push(res.score);
+        });
+      }
+
       rows.push(row);
     });
 
@@ -2671,36 +2736,41 @@
   function exportStatsExcel() {
     const enabled = getEnabledSubjects();
     const wb = XLSX.utils.book_new();
-    const cA = Math.round(state.cutlines.A);
-    const cB = Math.round(state.cutlines.B);
-    const cC = Math.round(state.cutlines.C);
 
     const rows = [
-      ['성취율 기준 안내', `A: ${cA}% 이상`, `B: ${cB}%~${cA}% 미만`, `C: ${cC}%~${cB}% 미만`, `D: ${cC}% 미만`],
-      [],
-      ['과목', '만점', '재적(전학제외)', '응시인원(명)', '미응시(명)', '전학(명)', '응시평균(점)', 'A_인원', 'A_비율(%)', 'B_인원', 'B_비율(%)', 'C_인원', 'C_비율(%)', 'D_인원', 'D_비율(%)']
+      ['응시학생수/총학생수', '과목', '성취도별 학생수', '', '', ''],
+      ['', '', 'A', 'B', 'C', 'D']
     ];
 
     enabled.forEach(sub => {
       const st = computeSubjectStats(sub);
       rows.push([
+        `${st.attended}/${st.enrolled}`,
         st.sub,
-        st.maxScore,
-        st.enrolled,
-        st.attended,
-        st.absent,
-        st.transferred,
-        st.attended > 0 ? st.avg : 0,
-        st.counts.A, st.rates.A,
-        st.counts.B, st.rates.B,
-        st.counts.C, st.rates.C,
-        st.counts.D, st.rates.D
+        st.counts.A,
+        st.counts.B,
+        st.counts.C,
+        st.counts.D
       ]);
     });
 
     const ws = XLSX.utils.aoa_to_sheet(rows);
+    ws['!merges'] = [
+      { s: { r: 0, c: 0 }, e: { r: 1, c: 0 } },
+      { s: { r: 0, c: 1 }, e: { r: 1, c: 1 } },
+      { s: { r: 0, c: 2 }, e: { r: 0, c: 5 } }
+    ];
+    ws['!cols'] = [
+      { wch: 20 },
+      { wch: 12 },
+      { wch: 10 },
+      { wch: 10 },
+      { wch: 10 },
+      { wch: 10 }
+    ];
+
     XLSX.utils.book_append_sheet(wb, ws, '성취수준_통계');
-    XLSX.writeFile(wb, '총괄평가_ABCD_성취수준_통계.xlsx');
+    XLSX.writeFile(wb, '총괄평가_성취수준_통계.xlsx');
   }
 
   // ==================== 전체 백업 및 초기화 ====================
@@ -2722,13 +2792,14 @@
       try {
         const parsed = JSON.parse(e.target.result);
         if (!parsed.subjects || !parsed.students) throw new Error('올바른 백업 파일이 아닙니다.');
-        state = parsed;
+        state = mergeSavedState(parsed);
         state.students.forEach(s => {
           s.status = normalizeStudentStatus(s);
           s.absentAll = (s.status === 'absentAll');
         });
         syncAllStudentScores();
         saveState();
+        applyActiveTabUI(state.activeTab || 'tab1');
         updateRoleView();
         renderAll();
         alert('백업 데이터를 성공적으로 불러왔습니다.');
