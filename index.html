@@ -1,0 +1,2763 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>총괄평가 성취수준(A·B·C·D) 채점 · 피드백 및 통계 시스템</title>
+  <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+  <style>
+    :root {
+      --primary: #2563eb;
+      --primary-dark: #1d4ed8;
+      --primary-light: #eff6ff;
+      --success: #16a34a;
+      --success-light: #dcfce7;
+      --danger: #dc2626;
+      --danger-light: #fee2e2;
+      --warning: #d97706;
+      --warning-light: #fef3c7;
+      --purple: #7c3aed;
+      --purple-light: #ede9fe;
+      --gray-50: #f8fafc;
+      --gray-100: #f1f5f9;
+      --gray-200: #e2e8f0;
+      --gray-300: #cbd5e1;
+      --gray-500: #64748b;
+      --gray-700: #334155;
+      --gray-900: #0f172a;
+      --odd-row-bg: #f1f5f9;
+      --even-row-bg: #ffffff;
+    }
+
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: 'Malgun Gothic', 'Apple SD Gothic Neo', -apple-system, BlinkMacSystemFont, sans-serif;
+      background-color: var(--gray-50);
+      color: var(--gray-900);
+      line-height: 1.5;
+    }
+
+    header {
+      background: #ffffff;
+      border-bottom: 1px solid var(--gray-200);
+      padding: 14px 24px;
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      position: sticky;
+      top: 0;
+      z-index: 50;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+    }
+    .header-title h1 {
+      margin: 0;
+      font-size: 1.22rem;
+      color: var(--gray-900);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .header-sub {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 8px;
+      font-size: 0.82rem;
+      color: var(--gray-500);
+      margin-top: 2px;
+    }
+    .maker-badge {
+      display: inline-flex;
+      align-items: center;
+      padding: 2px 9px;
+      border-radius: 999px;
+      background: var(--primary-light);
+      color: var(--primary-dark);
+      font-weight: 700;
+      font-size: 0.78rem;
+    }
+    .role-pill {
+      display: inline-flex;
+      align-items: center;
+      padding: 3px 10px;
+      border-radius: 999px;
+      font-size: 0.78rem;
+      font-weight: 700;
+      background: var(--gray-100);
+      color: var(--gray-700);
+      border: 1px solid var(--gray-300);
+    }
+    .header-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    button, .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      padding: 8px 14px;
+      font-size: 0.88rem;
+      font-weight: 600;
+      border-radius: 6px;
+      border: 1px solid var(--gray-300);
+      background: #ffffff;
+      color: var(--gray-700);
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+    button:hover { background: var(--gray-100); }
+    button:disabled { opacity: 0.5; cursor: not-allowed; }
+    .btn-primary {
+      background: var(--primary);
+      border-color: var(--primary);
+      color: #ffffff;
+    }
+    .btn-primary:hover { background: var(--primary-dark); }
+    .btn-success {
+      background: var(--success);
+      border-color: var(--success);
+      color: #ffffff;
+    }
+    .btn-success:hover { background: #15803d; }
+    .btn-danger {
+      background: #ffffff;
+      border-color: #fca5a5;
+      color: var(--danger);
+    }
+    .btn-danger:hover { background: var(--danger-light); }
+    .btn-sm { padding: 5px 10px; font-size: 0.8rem; }
+
+    /* 첫 진입 대표 / 비대표 선택 화면 */
+    .role-gate-wrap {
+      max-width: 820px;
+      margin: 36px auto;
+      padding: 0 20px;
+    }
+    .role-card-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(310px, 1fr));
+      gap: 18px;
+      margin-top: 16px;
+    }
+    .role-choice-card {
+      background: #ffffff;
+      border: 2px solid var(--gray-200);
+      border-radius: 12px;
+      padding: 22px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      gap: 14px;
+    }
+    .role-choice-card:hover { border-color: var(--primary); }
+    .role-choice-card h3 { margin: 0 0 6px; font-size: 1.12rem; }
+    .role-choice-card p { margin: 0; font-size: 0.88rem; color: var(--gray-500); }
+    .non-rep-box {
+      margin-top: 18px;
+      padding: 18px;
+      border-radius: 10px;
+      background: var(--primary-light);
+      border: 1px solid #bfdbfe;
+      display: none;
+    }
+    .non-rep-box.active { display: block; }
+
+    /* 메인 컨테이너 & 탭 */
+    .container {
+      max-width: 1440px;
+      margin: 20px auto;
+      padding: 0 20px 60px;
+    }
+    .tabs {
+      display: flex;
+      gap: 6px;
+      border-bottom: 2px solid var(--gray-200);
+      margin-bottom: 20px;
+      overflow-x: auto;
+    }
+    .tab-btn {
+      padding: 12px 20px;
+      font-size: 0.95rem;
+      font-weight: 700;
+      border: none;
+      border-bottom: 3px solid transparent;
+      border-radius: 8px 8px 0 0;
+      background: transparent;
+      color: var(--gray-500);
+      margin-bottom: -2px;
+      white-space: nowrap;
+    }
+    .tab-btn:hover {
+      color: var(--primary);
+      background: var(--primary-light);
+    }
+    .tab-btn.active {
+      color: var(--primary);
+      border-bottom-color: var(--primary);
+      background: #ffffff;
+    }
+    .tab-panel { display: none; }
+    .tab-panel.active { display: block; }
+
+    .card {
+      background: #ffffff;
+      border: 1px solid var(--gray-200);
+      border-radius: 10px;
+      padding: 20px;
+      margin-bottom: 20px;
+      box-shadow: 0 1px 2px rgba(0,0,0,0.03);
+    }
+    .card-header {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 14px;
+      padding-bottom: 10px;
+      border-bottom: 1px solid var(--gray-100);
+    }
+    .card-header h2 {
+      margin: 0;
+      font-size: 1.08rem;
+      color: var(--gray-900);
+    }
+    .card-desc {
+      margin: 0 0 14px;
+      font-size: 0.88rem;
+      color: var(--gray-500);
+    }
+
+    /* 1단계: 과목 O/X 및 문항수 그리드 */
+    .subject-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+      gap: 14px;
+    }
+    .subject-card {
+      border: 2px solid var(--gray-200);
+      border-radius: 10px;
+      padding: 16px;
+      background: var(--gray-50);
+      transition: all 0.15s;
+    }
+    .subject-card.enabled {
+      border-color: var(--primary);
+      background: #ffffff;
+    }
+    .subject-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 12px;
+    }
+    .subject-name { font-size: 1.1rem; font-weight: 800; }
+    .ox-toggle {
+      width: 56px;
+      height: 32px;
+      border-radius: 999px;
+      font-weight: 800;
+      font-size: 0.95rem;
+      border: none;
+    }
+    .ox-toggle.on { background: var(--primary); color: #ffffff; }
+    .ox-toggle.off { background: var(--gray-300); color: var(--gray-700); }
+    .input-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      font-size: 0.88rem;
+    }
+    input[type="number"], input[type="text"], select {
+      padding: 6px 10px;
+      border: 1px solid var(--gray-300);
+      border-radius: 6px;
+      font-size: 0.9rem;
+      font-family: inherit;
+    }
+    input[type="number"]:focus, input[type="text"]:focus, select:focus {
+      outline: none;
+      border-color: var(--primary);
+      box-shadow: 0 0 0 2px rgba(37,99,235,0.15);
+    }
+
+    /* 성취율 기준 설정 */
+    .preset-bar {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 14px;
+      padding: 10px 14px;
+      background: var(--gray-50);
+      border: 1px solid var(--gray-200);
+      border-radius: 8px;
+    }
+    .cutline-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+      gap: 12px;
+    }
+    .cutline-box {
+      border: 1px solid var(--gray-200);
+      border-radius: 8px;
+      padding: 14px;
+      background: var(--gray-50);
+    }
+    .grade-badge {
+      display: inline-block;
+      padding: 2px 10px;
+      border-radius: 6px;
+      font-weight: 800;
+      font-size: 0.85rem;
+    }
+    .grade-A { background: #dbeafe; color: #1e40af; }
+    .grade-B { background: #dcfce7; color: #166534; }
+    .grade-C { background: #fef3c7; color: #92400e; }
+    .grade-D { background: #fee2e2; color: #991b1b; }
+    .grade-NA { background: var(--gray-200); color: var(--gray-700); }
+    .grade-TR { background: #e2e8f0; color: #475569; }
+
+    /* 테이블 공통 & 홀수행 음영 */
+    .table-wrap {
+      overflow-x: auto;
+      border: 1px solid var(--gray-300);
+      border-radius: 8px;
+      background: #ffffff;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.88rem;
+    }
+    th, td {
+      border: 1px solid var(--gray-300);
+      padding: 8px 10px;
+      text-align: center;
+      white-space: nowrap;
+    }
+    th {
+      background: #e2e8f0;
+      font-weight: 700;
+      color: var(--gray-900);
+      position: sticky;
+      top: 0;
+      z-index: 10;
+    }
+    tbody tr:nth-child(odd) { background-color: var(--odd-row-bg); }
+    tbody tr:nth-child(even) { background-color: var(--even-row-bg); }
+    tbody tr:hover { background-color: #e0f2fe !important; }
+    tbody tr.absent-row { background-color: #e2e8f0 !important; color: var(--gray-500); }
+    tbody tr.transfer-row { background-color: #f1f5f9 !important; color: var(--gray-500); font-style: italic; }
+
+    .status-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 4px 10px;
+      border-radius: 999px;
+      font-size: 0.8rem;
+      font-weight: 700;
+    }
+    .status-ok { background: var(--success-light); color: var(--success); }
+    .status-err { background: var(--danger-light); color: var(--danger); border: 1px solid #fca5a5; }
+    .essay-ok { background: var(--success-light); color: #15803d; }
+    .essay-low { background: var(--purple-light); color: var(--purple); border: 1px solid #c4b5fd; }
+
+    .metrics-strip {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-bottom: 12px;
+      padding: 10px 14px;
+      background: var(--gray-50);
+      border: 1px solid var(--gray-200);
+      border-radius: 8px;
+      align-items: center;
+    }
+
+    .sub-tabs {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-bottom: 14px;
+    }
+    .sub-tab-btn {
+      padding: 8px 16px;
+      border-radius: 8px;
+      border: 1px solid var(--gray-300);
+      background: #ffffff;
+      font-weight: 700;
+    }
+    .sub-tab-btn.active {
+      background: var(--primary);
+      border-color: var(--primary);
+      color: #ffffff;
+    }
+    .q-header {
+      cursor: pointer;
+      user-select: none;
+      min-width: 54px;
+      padding: 6px 4px;
+      transition: background 0.15s;
+    }
+    .q-header:hover { background: #cbd5e1; }
+    .q-header.essay-col { background: #fef3c7; }
+    .q-header.essay-col:hover { background: #fde68a; }
+    .q-meta {
+      display: block;
+      font-size: 0.72rem;
+      font-weight: 500;
+      color: var(--gray-700);
+    }
+    .q-rate {
+      display: block;
+      font-size: 0.7rem;
+      font-weight: 700;
+      color: var(--primary-dark);
+      margin-top: 2px;
+    }
+
+    .obj-cell {
+      cursor: pointer;
+      user-select: none;
+      font-weight: 800;
+      font-size: 0.92rem;
+      transition: background 0.1s;
+    }
+    .obj-correct { color: var(--primary); }
+    .obj-wrong {
+      background-color: #fee2e2 !important;
+      color: var(--danger);
+    }
+
+    .essay-input {
+      width: 54px;
+      padding: 4px 4px;
+      text-align: center;
+      font-weight: 700;
+      border: 1px solid #f59e0b;
+      border-radius: 4px;
+      background: #fffbeb;
+    }
+    .essay-input.partial { background: #fef3c7; color: #b45309; }
+    .essay-input.zero { background: #fee2e2; color: var(--danger); }
+
+    .sticky-col-1 {
+      position: sticky;
+      left: 0;
+      z-index: 5;
+      background: inherit;
+      min-width: 52px;
+    }
+    .sticky-col-2 {
+      position: sticky;
+      left: 52px;
+      z-index: 5;
+      background: inherit;
+      min-width: 82px;
+      font-weight: 700;
+    }
+    th.sticky-col-1, th.sticky-col-2 {
+      z-index: 15;
+      background: #e2e8f0;
+    }
+
+    .student-link {
+      color: var(--primary);
+      font-weight: 700;
+      text-decoration: underline;
+      cursor: pointer;
+    }
+    .student-link:hover { color: var(--primary-dark); }
+
+    /* 모달 팝업 */
+    .modal-backdrop {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(15, 23, 42, 0.55);
+      z-index: 100;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+    .modal-backdrop.open { display: flex; }
+    .modal-box {
+      background: #ffffff;
+      border-radius: 12px;
+      max-width: 760px;
+      width: 100%;
+      max-height: 88vh;
+      overflow-y: auto;
+      padding: 24px;
+      box-shadow: 0 20px 25px -5px rgba(0,0,0,0.2);
+    }
+    .modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid var(--gray-200);
+      padding-bottom: 12px;
+      margin-bottom: 16px;
+    }
+    .modal-header h3 { margin: 0; font-size: 1.15rem; }
+    .wrong-chip {
+      display: inline-block;
+      background: var(--danger-light);
+      color: var(--danger);
+      border: 1px solid #fca5a5;
+      border-radius: 6px;
+      padding: 2px 8px;
+      font-size: 0.8rem;
+      font-weight: 700;
+      margin: 2px;
+    }
+    .essay-chip {
+      display: inline-block;
+      background: var(--warning-light);
+      color: #92400e;
+      border: 1px solid #fcd34d;
+      border-radius: 6px;
+      padding: 2px 8px;
+      font-size: 0.8rem;
+      font-weight: 700;
+      margin: 2px;
+    }
+    .perfect-chip {
+      display: inline-block;
+      background: var(--success-light);
+      color: var(--success);
+      border-radius: 6px;
+      padding: 2px 8px;
+      font-size: 0.8rem;
+      font-weight: 700;
+    }
+    .feedback-preview-box {
+      margin-top: 8px;
+      padding: 8px 12px;
+      background: var(--primary-light);
+      border-left: 3px solid var(--primary);
+      border-radius: 4px;
+      font-size: 0.86rem;
+      color: var(--gray-900);
+      white-space: normal;
+      text-align: left;
+    }
+
+    /* QR 코드 영역 */
+    .qr-result-box {
+      margin-top: 12px;
+      padding: 16px;
+      border: 1px solid var(--gray-200);
+      border-radius: 10px;
+      background: var(--gray-50);
+      display: none;
+    }
+    .qr-result-box.active {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 18px;
+      align-items: center;
+    }
+    #qrcodeCanvasWrap {
+      background: #ffffff;
+      padding: 12px;
+      border-radius: 8px;
+      border: 1px solid var(--gray-200);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 190px;
+      min-height: 190px;
+    }
+
+    /* 모바일 조회 전용 화면 */
+    .mobile-viewer-wrap {
+      max-width: 680px;
+      margin: 16px auto 50px;
+      padding: 0 14px;
+      display: none;
+    }
+    .mobile-viewer-wrap.active {
+      display: block;
+    }
+    .mobile-search-input {
+      width: 100%;
+      padding: 12px 14px;
+      font-size: 1rem;
+      border: 2px solid var(--primary);
+      border-radius: 8px;
+      margin-bottom: 12px;
+    }
+    .mobile-student-chip-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
+      gap: 8px;
+      margin-bottom: 16px;
+    }
+    .mobile-stu-btn {
+      padding: 10px 8px;
+      font-size: 0.95rem;
+      font-weight: 700;
+      border-radius: 8px;
+      border: 1px solid var(--gray-300);
+      background: #ffffff;
+      color: var(--gray-900);
+    }
+    .mobile-stu-btn.selected {
+      background: var(--primary);
+      color: #ffffff;
+      border-color: var(--primary);
+    }
+    .mobile-detail-card {
+      background: #ffffff;
+      border: 2px solid var(--primary);
+      border-radius: 12px;
+      padding: 16px;
+      margin-bottom: 16px;
+    }
+    .mobile-subj-box {
+      padding: 12px;
+      border: 1px solid var(--gray-200);
+      border-radius: 8px;
+      background: var(--gray-50);
+      margin-bottom: 10px;
+    }
+
+    .toolbar {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      margin-bottom: 12px;
+      padding: 10px 14px;
+      background: var(--gray-100);
+      border-radius: 8px;
+    }
+    .toolbar-group {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 8px;
+    }
+    .file-input-hidden { display: none; }
+    .helper-text { font-size: 0.82rem; color: var(--gray-500); }
+
+    footer {
+      max-width: 1440px;
+      margin: 0 auto 30px;
+      padding: 0 20px;
+      font-size: 0.82rem;
+      color: var(--gray-500);
+      display: flex;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <div class="header-title">
+    <h1>📊 총괄평가 성취수준(A·B·C·D) 채점 · 피드백 및 통계 시스템</h1>
+    <div class="header-sub">
+      <span class="maker-badge">만든 사람 : 은두리</span>
+      <span id="roleStatusBadge" class="role-pill">역할 미선택</span>
+      <span>문항정보표 · 피드백 자동 조합 · 미응시/전학 통계 · 모바일 QR 조회</span>
+    </div>
+  </div>
+  <div class="header-actions" id="desktopHeaderActions">
+    <button onclick="openRoleGate()">🔄 대표/비대표 선택</button>
+    <button id="headerDownloadCriteriaBtn" class="btn-primary" onclick="downloadCriteriaJSON()" style="display:none;">📤 기준 설정 다운로드</button>
+    <button class="btn-success" onclick="openQrGeneratorFromAny()">📱 모바일 조회용 QR</button>
+    <button onclick="exportBackupJSON()">💾 전체 백업</button>
+    <button onclick="document.getElementById('backupFileInput').click()">📂 백업 불러오기</button>
+    <input type="file" id="backupFileInput" class="file-input-hidden" accept=".json" onchange="importBackupJSON(event)" />
+    <button class="btn-danger" onclick="resetAllData()">🗑️ 전체 초기화</button>
+  </div>
+</header>
+
+<!-- 모바일 QR 링크 접속 시 전용 조회 화면 -->
+<section id="mobileViewerSection" class="mobile-viewer-wrap">
+  <div class="card">
+    <div class="card-header">
+      <h2>📱 모바일 성적·오답·통계 조회</h2>
+      <span class="maker-badge">만든 사람 : 은두리</span>
+    </div>
+    <p class="card-desc">학생 이름을 누르면 과목별 점수·등급·틀린 문항·피드백이 바로 표시됩니다.</p>
+
+    <div class="sub-tabs">
+      <button class="sub-tab-btn active" id="mTabStudentBtn" onclick="switchMobileViewTab('student')">학생별 조회</button>
+      <button class="sub-tab-btn" id="mTabStatsBtn" onclick="switchMobileViewTab('stats')">과목별 통계</button>
+    </div>
+
+    <div id="mobileStudentView">
+      <input type="text" id="mobileSearchInput" class="mobile-search-input" placeholder="이름 또는 번호로 검색 (예: 민준, 3)" oninput="renderMobileStudentChips()" />
+      <div class="mobile-student-chip-grid" id="mobileStudentChips"></div>
+      <div id="mobileSelectedStudentDetail"></div>
+    </div>
+
+    <div id="mobileStatsView" style="display:none;">
+      <div id="mobileStatsCards"></div>
+    </div>
+  </div>
+</section>
+
+<!-- 첫 진입 대표 여부 선택 화면 -->
+<section id="roleGateSection" class="role-gate-wrap">
+  <div class="card">
+    <div class="card-header">
+      <h2>👋 시작하기 전에 — 이번 평가의 '대표'이신가요?</h2>
+      <span class="maker-badge">만든 사람 : 은두리</span>
+    </div>
+    <p class="card-desc">
+      여러 반이 함께 사용하는 경우, 한 분이 <strong>대표</strong>로 과목·문항정보표·성취율 기준·피드백을 세팅한 뒤 <strong>기준 설정 파일</strong>을 내려받아 공유하면, 다른 반은 그 파일을 올려 명단만 넣고 바로 채점할 수 있습니다.
+    </p>
+
+    <div class="role-card-grid">
+      <div class="role-choice-card">
+        <div>
+          <h3>👑 네, 제가 대표입니다 (기준 세팅 및 다운로드)</h3>
+          <p>과목(O/X), 문항 수, 피드백(O/X), 성취율 기준, 문항정보표, 피드백 문구를 설정한 뒤 <strong>기준 설정 파일(.json)</strong>을 다운로드해 다른 반에 공유합니다.</p>
+        </div>
+        <button class="btn-primary" onclick="selectRepresentativeRole()">대표로 기준 설정 시작하기 →</button>
+      </div>
+
+      <div class="role-choice-card">
+        <div>
+          <h3>👥 아니요, 대표가 아닙니다 (기준 업로드 후 명단 입력)</h3>
+          <p>대표 교사가 공유한 <strong>기준 설정 파일(.json)</strong>을 업로드하면 과목·배점·피드백·성취율 기준이 자동 적용됩니다. 이후 우리 반 명단만 넣고 바로 채점을 시작합니다.</p>
+        </div>
+        <button class="btn-success" onclick="showNonRepresentativeBox()">기준 설정 업로드 화면 열기</button>
+      </div>
+    </div>
+
+    <div id="nonRepUploadBox" class="non-rep-box">
+      <h3 style="margin:0 0 8px; font-size:1rem;">📥 대표 교사의 기준 설정 파일(.json) 업로드</h3>
+      <p style="margin:0 0 12px; font-size:0.88rem; color:var(--gray-700);">
+        기준 파일을 선택하면 설정이 즉시 반영되며, 곧바로 <strong>학생 명단 입력 화면(2단계)</strong>으로 이동합니다.
+      </p>
+      <div style="display:flex; flex-wrap:wrap; gap:10px; align-items:center;">
+        <button class="btn-primary" onclick="document.getElementById('criteriaUploadInput').click()">📂 기준 설정 파일 선택 (.json)</button>
+        <input type="file" id="criteriaUploadInput" class="file-input-hidden" accept=".json" onchange="uploadCriteriaJSON(event)" />
+        <button class="btn-sm" onclick="skipCriteriaToStudentList()">파일 없이 명단 입력부터 바로 시작</button>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 메인 4단계 작업 화면 -->
+<div class="container" id="mainWorkspace" style="display:none;">
+  <nav class="tabs">
+    <button class="tab-btn active" data-tab="tab1" onclick="switchTab('tab1')">1단계. 과목 · 문항 수 · 피드백 · 성취율 설정</button>
+    <button class="tab-btn" data-tab="tab2" onclick="switchTab('tab2')">2단계. 명단 · 문항정보표 · 피드백 관리</button>
+    <button class="tab-btn" data-tab="tab3" onclick="switchTab('tab3')">3단계. 문항별 채점 입력</button>
+    <button class="tab-btn" data-tab="tab4" onclick="switchTab('tab4')">4단계. 종합 결과 · 통계 · 엑셀 · QR</button>
+  </nav>
+
+  <!-- ==================== 1단계: 기본 설정 ==================== -->
+  <section id="tab1" class="tab-panel active">
+    <div class="card">
+      <div class="card-header">
+        <h2>1-1. 총괄평가 실시 과목(O/X) 및 과목별 문항 수 설정</h2>
+      </div>
+      <p class="card-desc">평가할 과목을 <strong>O</strong>로 켜고 문항 수를 입력하세요. 설정 후 2단계에서 과목별 시트가 나뉜 문항정보표 및 피드백 양식을 내려받을 수 있습니다.</p>
+      <div class="subject-grid" id="subjectConfigGrid"></div>
+    </div>
+
+    <div class="card">
+      <div class="card-header">
+        <h2>1-2. 문항별 피드백 사용 여부 (O / X)</h2>
+        <button id="feedbackToggleBtn" class="ox-toggle off" onclick="toggleFeedbackEnabled()">X</button>
+      </div>
+      <p class="card-desc" style="margin-bottom:0;">
+        <strong>O</strong>로 선택하면 2단계에서 <strong>과목별·문항별 피드백 + 다 맞았을 때 피드백</strong> 양식을 다운로드/업로드할 수 있으며, 틀리거나 부분 감점된 문항의 피드백이 <code>~함. ~함.</code> 형태로 자동 조합되어 메일머지 엑셀에 함께 추출됩니다.
+      </p>
+    </div>
+
+    <div class="card">
+      <div class="card-header">
+        <h2>1-3. 학교별 성취율 기준 설정 (1단위 정수 · A · B · C · D)</h2>
+        <button class="btn-sm" onclick="applyPresetCutlines(90, 80, 70)">기본값(90 / 80 / 70) 복원</button>
+      </div>
+      <p class="card-desc">성취율(%) 기준을 1단위 정수로 설정하면 모든 과목의 등급 산출과 통계에 즉시 반영됩니다.</p>
+
+      <div class="preset-bar">
+        <strong>📌 추천 설정 예시:</strong>
+        <button class="btn-sm btn-primary" onclick="applyPresetCutlines(90, 80, 70)">
+          예시 1: A 90% · B 80% · C 70% (70% 미만 D)
+        </button>
+        <button class="btn-sm btn-success" onclick="applyPresetCutlines(85, 75, 60)">
+          예시 2: A 85% · B 75% · C 60% (60% 미만 D)
+        </button>
+      </div>
+
+      <div class="cutline-grid">
+        <div class="cutline-box">
+          <div style="margin-bottom:8px;"><span class="grade-badge grade-A">A 등급</span></div>
+          <div class="input-row">
+            <span>성취율</span>
+            <div><input type="number" id="cutA" min="1" max="100" step="1" style="width:72px;" onchange="updateCutlines()" /> % 이상</div>
+          </div>
+        </div>
+        <div class="cutline-box">
+          <div style="margin-bottom:8px;"><span class="grade-badge grade-B">B 등급</span></div>
+          <div class="input-row">
+            <span>성취율</span>
+            <div><input type="number" id="cutB" min="1" max="99" step="1" style="width:72px;" onchange="updateCutlines()" /> % 이상 ~ <strong id="labelBMax">90</strong>% 미만</div>
+          </div>
+        </div>
+        <div class="cutline-box">
+          <div style="margin-bottom:8px;"><span class="grade-badge grade-C">C 등급</span></div>
+          <div class="input-row">
+            <span>성취율</span>
+            <div><input type="number" id="cutC" min="1" max="98" step="1" style="width:72px;" onchange="updateCutlines()" /> % 이상 ~ <strong id="labelCMax">80</strong>% 미만</div>
+          </div>
+        </div>
+        <div class="cutline-box">
+          <div style="margin-bottom:8px;"><span class="grade-badge grade-D">D 등급</span></div>
+          <div class="input-row">
+            <span>성취율</span>
+            <div><strong id="labelDMax">70</strong>% 미만</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;">
+      <button class="btn-success" onclick="downloadCriteriaJSON()">📤 기준 설정 다운로드 (.json)</button>
+      <button class="btn-primary" onclick="switchTab('tab2')">다음 단계: 명단 및 문항정보표 관리 →</button>
+    </div>
+  </section>
+
+  <!-- ==================== 2단계: 명단 · 문항정보표 · 피드백 ==================== -->
+  <section id="tab2" class="tab-panel">
+    <div class="card">
+      <div class="card-header">
+        <h2>2-1. 문항정보표 양식 다운로드 및 업로드 (과목별 시트 분리형)</h2>
+        <div class="toolbar-group">
+          <button class="btn-success" onclick="downloadCriteriaJSON()">📤 기준 설정 다운로드 (.json)</button>
+          <button class="btn-primary" onclick="downloadQuestionTemplate()">📥 문항정보표 양식 다운로드 (.xlsx)</button>
+          <button class="btn-success" onclick="document.getElementById('qUploadInput').click()">📤 문항정보표 업로드 (.xlsx)</button>
+          <input type="file" id="qUploadInput" class="file-input-hidden" accept=".xlsx,.xls" onchange="uploadQuestionTemplate(event)" />
+        </div>
+      </div>
+      <p class="card-desc">
+        엑셀 양식에서 배점과 문항유형(<code>객관식</code> / <code>서논술형</code>)을 한 번에 붙여넣어 업로드하거나 아래 표에서 바로 수정하세요. <strong>총점이 100점이 아니면 빨간색</strong>으로 표시되고, <strong>서논술형 비율(30% 기준)</strong>도 별도 색상으로 표시됩니다.
+      </p>
+
+      <div id="questionSummaryBar" style="margin-bottom:12px; display:flex; flex-wrap:wrap; gap:8px;"></div>
+      <div class="sub-tabs" id="qEditorSubTabs"></div>
+      <div id="qMetricsStrip" class="metrics-strip"></div>
+      <div id="qEditorTableContainer"></div>
+    </div>
+
+    <div class="card" id="feedbackSetupCard" style="display:none;">
+      <div class="card-header">
+        <h2>2-2. 과목별·문항별 피드백 양식 다운로드 및 업로드 (과목별 시트 분리형)</h2>
+        <div class="toolbar-group">
+          <button class="btn-primary" onclick="downloadFeedbackTemplate()">📥 피드백 양식 다운로드 (.xlsx)</button>
+          <button class="btn-success" onclick="document.getElementById('fbUploadInput').click()">📤 피드백 한 번에 업로드 (.xlsx)</button>
+          <input type="file" id="fbUploadInput" class="file-input-hidden" accept=".xlsx,.xls" onchange="uploadFeedbackTemplate(event)" />
+        </div>
+      </div>
+      <p class="card-desc">
+        과목별 시트에 각 문항(<code>1번 ~ 마지막 문항</code>)의 피드백과 맨 아래 <strong><code>다 맞았을 때</code></strong> 피드백을 입력한 뒤 업로드하세요. 틀리거나 부분 감점된 문항의 피드백이 <code>~함. ~함.</code> 형태로 자동 연결됩니다.
+      </p>
+      <div id="feedbackSummaryBar" style="margin-bottom:12px; display:flex; flex-wrap:wrap; gap:8px;"></div>
+      <div class="sub-tabs" id="fbEditorSubTabs"></div>
+      <div id="fbEditorTableContainer"></div>
+    </div>
+
+    <div class="card">
+      <div class="card-header">
+        <h2 id="studentCardTitle">2-2. 학생 명단 양식 다운로드(기본 30명) · 업로드 · 응시/미응시/전학 관리</h2>
+        <div class="toolbar-group">
+          <button onclick="addSingleStudent()">➕ 학생 1명 추가</button>
+          <button class="btn-primary" onclick="downloadStudentTemplate()">📥 학생 명단 양식 다운로드 (30명)</button>
+          <button class="btn-success" onclick="document.getElementById('sUploadInput').click()">📤 학생 명단 업로드 (.xlsx)</button>
+          <input type="file" id="sUploadInput" class="file-input-hidden" accept=".xlsx,.xls" onchange="uploadStudentTemplate(event)" />
+        </div>
+      </div>
+      <p class="card-desc">
+        양식 다운로드 시 <strong>1번~30번</strong>이 기본으로 나오며, 남는 행은 지우고 명단만 넣으면 됩니다. 응시여부 열에 <strong><code>미응시</code></strong> 또는 <strong><code>전학</code></strong>을 적으면 자동 반영됩니다. (<strong>전학</strong> 학생은 통계 인원/비율 분모에서 제외)
+      </p>
+      <div class="table-wrap" style="max-height: 420px;">
+        <table>
+          <thead>
+            <tr>
+              <th style="width:80px;">번호</th>
+              <th style="width:160px;">이름</th>
+              <th style="width:180px;">학적/응시 상태</th>
+              <th style="width:90px;">삭제</th>
+            </tr>
+          </thead>
+          <tbody id="studentListBody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <div style="display:flex; justify-content:space-between;">
+      <button onclick="switchTab('tab1')">← 이전 단계</button>
+      <button class="btn-primary" onclick="switchTab('tab3')">다음 단계: 문항별 채점 입력 →</button>
+    </div>
+  </section>
+
+  <!-- ==================== 3단계: 문항별 채점 입력 ==================== -->
+  <section id="tab3" class="tab-panel">
+    <div class="card">
+      <div class="card-header">
+        <h2>3단계. 과목별 문항 채점 입력</h2>
+        <div class="toolbar-group">
+          <button class="btn-sm" onclick="setAllStudentsPerfectCurrentSubject()">✅ 현재 과목 전원 만점 초기화</button>
+        </div>
+      </div>
+      <p class="card-desc">
+        • <strong>객관식</strong>: 기본값이 <strong>정답(만점)</strong>입니다. 틀린 칸만 클릭하면 오답(0점)으로 바뀝니다.<br/>
+        • <strong>서논술형</strong>: 배점 한도 내에서 부분점수를 직접 숫자로 입력하세요. (<code>Enter</code> 또는 <code>↑/↓</code> 키로 위아래 학생 칸 이동)<br/>
+        • <strong>문항 번호 헤더 클릭</strong>: 반 전체 학생의 해당 문항을 한 번에 정답/오답 전환할 수 있습니다.
+      </p>
+
+      <div class="sub-tabs" id="gradingSubTabs"></div>
+      <div id="gradingInfoBanner" class="toolbar"></div>
+
+      <div class="table-wrap" style="max-height: 620px;">
+        <table id="gradingTable">
+          <thead id="gradingThead"></thead>
+          <tbody id="gradingTbody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <div style="display:flex; justify-content:space-between;">
+      <button onclick="switchTab('tab2')">← 이전 단계</button>
+      <button class="btn-primary" onclick="switchTab('tab4')">다음 단계: 종합 결과 및 통계 확인 →</button>
+    </div>
+  </section>
+
+  <!-- ==================== 4단계: 종합 결과 · 통계 · 엑셀 · QR ==================== -->
+  <section id="tab4" class="tab-panel">
+    <div class="card">
+      <div class="card-header">
+        <h2>4-1. 메일머지용 · 성취수준(A·B·C·D) 통계 엑셀 추출 &amp; 모바일 조회용 QR</h2>
+      </div>
+      <div class="toolbar">
+        <div class="toolbar-group">
+          <strong>메일머지 포함 항목:</strong>
+          <label><input type="checkbox" checked disabled /> 번호·이름</label>
+          <label><input type="checkbox" checked disabled /> 과목별 등급</label>
+          <label><input type="checkbox" id="mmIncludeScore" checked /> 과목별 원점수 포함</label>
+          <label><input type="checkbox" id="mmIncludeRate" /> 과목별 성취율(%) 포함</label>
+          <label id="mmFeedbackBadge" style="display:none; color:var(--primary); font-weight:700;">
+            <input type="checkbox" checked disabled /> 과목별 피드백 자동 포함
+          </label>
+        </div>
+        <div class="toolbar-group">
+          <button class="btn-primary" onclick="exportMailMergeExcel()">📄 메일머지용 엑셀 다운로드 (.xlsx)</button>
+          <button class="btn-success" onclick="exportStatsExcel()">📊 A·B·C·D 통계 엑셀 다운로드 (.xlsx)</button>
+          <button class="btn-primary" onclick="generateMobileLookupQR()">📱 모바일 조회용 QR 만들기</button>
+        </div>
+      </div>
+
+      <div id="qrResultBox" class="qr-result-box">
+        <div id="qrcodeCanvasWrap"></div>
+        <div style="flex:1; min-width:240px;">
+          <h3 style="margin:0 0 6px; font-size:1rem;">📱 스마트폰으로 스캔하거나 링크를 열어 조회하세요</h3>
+          <p style="margin:0 0 8px; font-size:0.84rem; color:var(--gray-700);">
+            외부 서버 없이 링크 주소에 조회용 데이터가 담깁니다. 폰에서 열면 파일 업로드 없이 바로 <strong>통계</strong>와 <strong>학생별 점수·틀린 문항·피드백</strong>을 볼 수 있습니다.
+          </p>
+          <div style="display:flex; flex-wrap:wrap; gap:8px; margin-bottom:8px;">
+            <button class="btn-sm btn-primary" onclick="copyLookupUrl()">🔗 조회 링크 복사</button>
+            <a id="directLookupLink" href="#" target="_blank" class="btn btn-sm btn-success" style="text-decoration:none;">새 창에서 조회 화면 미리보기</a>
+          </div>
+          <div id="qrLengthNotice" class="helper-text"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-header">
+        <h2>4-2. 과목별 성취수준(A·B·C·D) 통계 (응시자 기준 정수 비율 · 전학 제외 · 미응시 별도 집계)</h2>
+      </div>
+      <p class="card-desc">등급 비율(%)은 <strong>실제 응시 인원</strong>을 분모로 산출되며, <strong>전학</strong> 학생은 통계 분모에서 제외됩니다.</p>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>과목</th>
+              <th>만점</th>
+              <th>재적(전학제외)</th>
+              <th>응시 인원</th>
+              <th>미응시</th>
+              <th>전학</th>
+              <th>응시 평균</th>
+              <th>A 등급</th>
+              <th>B 등급</th>
+              <th>C 등급</th>
+              <th>D 등급</th>
+            </tr>
+          </thead>
+          <tbody id="statsTableBody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-header">
+        <h2>4-3. 학생별 종합 성적 일람표 (학생 이름 클릭 시 과목별 점수 · 틀린 문항 · 피드백 확인)</h2>
+      </div>
+      <div class="table-wrap" style="max-height: 560px;">
+        <table>
+          <thead id="summaryThead"></thead>
+          <tbody id="summaryTbody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <div style="text-align:left;">
+      <button onclick="switchTab('tab3')">← 채점 화면으로 돌아가기</button>
+    </div>
+  </section>
+</div>
+
+<footer>
+  <div>만든 사람 : <strong>은두리</strong></div>
+  <div>총괄평가 성취수준(A·B·C·D) 채점 · 피드백 및 통계 시스템</div>
+</footer>
+
+<!-- 학생 상세 모달 -->
+<div class="modal-backdrop" id="studentDetailModal" onclick="if(event.target===this) closeStudentModal()">
+  <div class="modal-box">
+    <div class="modal-header">
+      <h3 id="modalStudentTitle">학생 상세 성적 및 오답 분석</h3>
+      <button class="btn-sm" onclick="closeStudentModal()">✕ 닫기</button>
+    </div>
+    <div id="modalStudentBody"></div>
+  </div>
+</div>
+
+<script>
+  const SUBJECTS = ['국어', '수학', '사회', '과학', '영어'];
+  const STORAGE_KEY = 'summative_eval_app_v6';
+
+  let state = {
+    role: null,
+    feedbackEnabled: false,
+    subjects: {
+      '국어': { enabled: true, count: 20, questions: [], perfectFeedback: '' },
+      '수학': { enabled: true, count: 20, questions: [], perfectFeedback: '' },
+      '사회': { enabled: false, count: 20, questions: [], perfectFeedback: '' },
+      '과학': { enabled: false, count: 20, questions: [], perfectFeedback: '' },
+      '영어': { enabled: false, count: 20, questions: [], perfectFeedback: '' }
+    },
+    cutlines: { A: 90, B: 80, C: 70 },
+    students: [],
+    scores: {},
+    activeQEditorSubject: '국어',
+    activeFbEditorSubject: '국어',
+    activeGradingSubject: '국어'
+  };
+
+  let mobileLookupData = null;
+  let selectedMobileStudentId = null;
+  let latestLookupUrl = '';
+
+  function normalizeStudentStatus(stu) {
+    if (stu.status === 'transferred' || stu.status === 'absentAll' || stu.status === 'active') {
+      return stu.status;
+    }
+    return stu.absentAll ? 'absentAll' : 'active';
+  }
+
+  function createDefaultQuestions(count) {
+    const n = Math.max(1, parseInt(count, 10) || 20);
+    const basePoint = Math.floor((100 / n) * 10) / 10;
+    const arr = [];
+    let sum = 0;
+    for (let i = 1; i <= n; i++) {
+      let pt = basePoint;
+      if (i === n) {
+        pt = Math.round((100 - sum) * 10) / 10;
+        if (pt <= 0) pt = basePoint;
+      }
+      sum = Math.round((sum + pt) * 10) / 10;
+      arr.push({ num: i, type: '객관식', points: pt, feedback: '' });
+    }
+    return arr;
+  }
+
+  function createDefaultStudents() {
+    const sampleNames = ['김민준', '이서연', '박도윤', '최지우', '정하준'];
+    return sampleNames.map((name, idx) => ({
+      id: 'stu_' + (idx + 1),
+      num: idx + 1,
+      name,
+      status: 'active',
+      absentAll: false
+    }));
+  }
+
+  // URL 해시에 담긴 모바일 조회용 데이터 파싱
+  function tryLoadMobileLookupFromHash() {
+    const h = window.location.hash || '';
+    if (!h.startsWith('#view=')) return false;
+    try {
+      const encoded = decodeURIComponent(h.slice(6));
+      const binStr = atob(encoded);
+      const bytes = new Uint8Array(binStr.length);
+      for (let i = 0; i < binStr.length; i++) {
+        bytes[i] = binStr.charCodeAt(i);
+      }
+      const jsonStr = new TextDecoder().decode(bytes);
+      const parsed = JSON.parse(jsonStr);
+      if (parsed && Array.isArray(parsed.students) && Array.isArray(parsed.stats)) {
+        mobileLookupData = parsed;
+        if (parsed.students.length > 0) {
+          selectedMobileStudentId = parsed.students[0].id;
+        }
+        return true;
+      }
+    } catch (err) {
+      console.error('모바일 조회 데이터 디코딩 실패:', err);
+    }
+    return false;
+  }
+
+  function initApp() {
+    const isMobileLookup = tryLoadMobileLookupFromHash();
+    if (isMobileLookup) {
+      document.getElementById('roleGateSection').style.display = 'none';
+      document.getElementById('mainWorkspace').style.display = 'none';
+      document.getElementById('desktopHeaderActions').style.display = 'none';
+      document.getElementById('roleStatusBadge').textContent = '📱 모바일 조회 전용';
+      document.getElementById('mobileViewerSection').classList.add('active');
+      renderMobileViewer();
+      return;
+    }
+
+    const saved = localStorage.getItem(STORAGE_KEY);
+    if (saved) {
+      try {
+        const parsed = JSON.parse(saved);
+        state = Object.assign(state, parsed);
+      } catch (e) {
+        console.error('저장 데이터 파싱 오류:', e);
+      }
+    }
+
+    SUBJECTS.forEach(sub => {
+      if (!state.subjects[sub].questions || state.subjects[sub].questions.length === 0) {
+        state.subjects[sub].questions = createDefaultQuestions(state.subjects[sub].count);
+      } else {
+        state.subjects[sub].questions.forEach(q => {
+          if (typeof q.feedback !== 'string') q.feedback = '';
+        });
+      }
+      if (typeof state.subjects[sub].perfectFeedback !== 'string') {
+        state.subjects[sub].perfectFeedback = '';
+      }
+    });
+
+    if (!state.students || state.students.length === 0) {
+      state.students = createDefaultStudents();
+    } else {
+      state.students.forEach(s => {
+        s.status = normalizeStudentStatus(s);
+        s.absentAll = (s.status === 'absentAll');
+      });
+    }
+
+    syncAllStudentScores();
+    updateRoleView();
+    renderAll();
+  }
+
+  function saveState() {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+  }
+
+  // ==================== 모바일 조회 전용 렌더링 ====================
+  function switchMobileViewTab(mode) {
+    document.getElementById('mTabStudentBtn').classList.toggle('active', mode === 'student');
+    document.getElementById('mTabStatsBtn').classList.toggle('active', mode === 'stats');
+    document.getElementById('mobileStudentView').style.display = mode === 'student' ? 'block' : 'none';
+    document.getElementById('mobileStatsView').style.display = mode === 'stats' ? 'block' : 'none';
+    if (mode === 'stats') renderMobileStatsCards();
+  }
+
+  function renderMobileViewer() {
+    renderMobileStudentChips();
+    renderMobileSelectedStudentDetail();
+    renderMobileStatsCards();
+  }
+
+  function renderMobileStudentChips() {
+    if (!mobileLookupData) return;
+    const kw = (document.getElementById('mobileSearchInput').value || '').trim().toLowerCase();
+    const list = mobileLookupData.students.filter(s => {
+      if (!kw) return true;
+      return String(s.num).includes(kw) || String(s.name).toLowerCase().includes(kw);
+    });
+
+    const wrap = document.getElementById('mobileStudentChips');
+    if (list.length === 0) {
+      wrap.innerHTML = `<div class="helper-text">검색 결과가 없습니다.</div>`;
+      return;
+    }
+
+    wrap.innerHTML = list.map(s => `
+      <button class="mobile-stu-btn ${selectedMobileStudentId === s.id ? 'selected' : ''}"
+        onclick="selectMobileStudent('${s.id}')">
+        ${s.num}번 ${escapeHtml(s.name)}
+      </button>
+    `).join('');
+  }
+
+  function selectMobileStudent(stuId) {
+    selectedMobileStudentId = stuId;
+    renderMobileStudentChips();
+    renderMobileSelectedStudentDetail();
+  }
+
+  function renderMobileSelectedStudentDetail() {
+    const box = document.getElementById('mobileSelectedStudentDetail');
+    if (!mobileLookupData) return;
+    const stu = mobileLookupData.students.find(s => s.id === selectedMobileStudentId) || mobileLookupData.students[0];
+    if (!stu) {
+      box.innerHTML = '';
+      return;
+    }
+
+    box.innerHTML = `
+      <div class="mobile-detail-card">
+        <div style="font-size:1.15rem; font-weight:800; margin-bottom:10px;">
+          📌 ${stu.num}번 ${escapeHtml(stu.name)}
+        </div>
+        ${stu.subjects.map(item => {
+          if (item.status === 'transferred') {
+            return `
+              <div class="mobile-subj-box">
+                <strong>${item.sub}</strong> : <span class="grade-badge grade-TR">전학</span>
+              </div>
+            `;
+          }
+          if (item.status === 'absent') {
+            return `
+              <div class="mobile-subj-box">
+                <strong>${item.sub}</strong> : <span class="grade-badge grade-NA">미응시</span>
+              </div>
+            `;
+          }
+          return `
+            <div class="mobile-subj-box">
+              <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+                <strong style="font-size:1rem;">${item.sub}</strong>
+                <span class="grade-badge grade-${item.grade}">${item.grade}등급 (${item.rate}%)</span>
+              </div>
+              <div style="font-size:0.95rem; font-weight:700; margin-bottom:4px;">
+                점수: ${item.score} / ${item.maxScore}점
+              </div>
+              <div style="font-size:0.86rem; color:var(--danger);">
+                틀린/감점 문항: ${item.wrongSummary && item.wrongSummary.length > 0 ? escapeHtml(item.wrongSummary.join(', ')) : '없음(만점)'}
+              </div>
+              ${item.feedback ? `
+                <div class="feedback-preview-box" style="margin-top:6px;">
+                  ${escapeHtml(item.feedback)}
+                </div>
+              ` : ''}
+            </div>
+          `;
+        }).join('')}
+      </div>
+    `;
+  }
+
+  function renderMobileStatsCards() {
+    if (!mobileLookupData) return;
+    const wrap = document.getElementById('mobileStatsCards');
+    wrap.innerHTML = mobileLookupData.stats.map(st => `
+      <div class="mobile-subj-box">
+        <div style="font-size:1rem; font-weight:800; margin-bottom:6px;">
+          ${st.sub} (만점 ${st.maxScore}점 · 응시 ${st.attended}명 · 평균 ${st.avg}점)
+        </div>
+        <div style="display:flex; flex-wrap:wrap; gap:6px; font-size:0.85rem;">
+          <span class="grade-badge grade-A">A ${st.counts.A}명(${st.rates.A}%)</span>
+          <span class="grade-badge grade-B">B ${st.counts.B}명(${st.rates.B}%)</span>
+          <span class="grade-badge grade-C">C ${st.counts.C}명(${st.rates.C}%)</span>
+          <span class="grade-badge grade-D">D ${st.counts.D}명(${st.rates.D}%)</span>
+        </div>
+        <div class="helper-text" style="margin-top:6px;">미응시 ${st.absent}명 · 전학 ${st.transferred}명</div>
+      </div>
+    `).join('');
+  }
+
+  // ==================== QR 생성 (외부 서버 없이 URL 해시에 압축 저장) ====================
+  function openQrGeneratorFromAny() {
+    if (!state.role) {
+      state.role = 'rep';
+      saveState();
+      updateRoleView();
+    }
+    switchTab('tab4');
+    generateMobileLookupQR();
+  }
+
+  function generateMobileLookupQR() {
+    const enabled = getEnabledSubjects();
+    const payload = {
+      stats: enabled.map(sub => computeSubjectStats(sub)),
+      students: state.students.map(stu => {
+        const stStatus = normalizeStudentStatus(stu);
+        return {
+          id: stu.id,
+          num: stu.num,
+          name: stu.name,
+          subjects: enabled.map(sub => {
+            const res = getStudentSubjectResult(stu, sub);
+            if (res.transferred) {
+              return { sub, status: 'transferred' };
+            }
+            if (res.absent) {
+              return { sub, status: 'absent' };
+            }
+            const qs = state.subjects[sub].questions;
+            const items = state.scores[stu.id]?.[sub]?.items || [];
+            const wrongSummary = [];
+            qs.forEach((q, idx) => {
+              const earned = Number(items[idx]) || 0;
+              if (earned === 0) wrongSummary.push(`${q.num}번(0점)`);
+              else if (earned < q.points) wrongSummary.push(`${q.num}번(${earned}/${q.points}점)`);
+            });
+            return {
+              sub,
+              status: 'ok',
+              score: res.score,
+              maxScore: res.maxScore,
+              rate: res.rate,
+              grade: res.grade,
+              wrongSummary,
+              feedback: state.feedbackEnabled ? getStudentSubjectFeedback(stu, sub) : ''
+            };
+          })
+        };
+      })
+    };
+
+    const jsonStr = JSON.stringify(payload);
+    const bytes = new TextEncoder().encode(jsonStr);
+    let binStr = '';
+    for (let i = 0; i < bytes.length; i++) {
+      binStr += String.fromCharCode(bytes[i]);
+    }
+    const b64 = btoa(binStr);
+    const baseUrl = window.location.href.split('#')[0];
+    const fullUrl = `${baseUrl}#view=${encodeURIComponent(b64)}`;
+    latestLookupUrl = fullUrl;
+
+    const box = document.getElementById('qrResultBox');
+    box.classList.add('active');
+    document.getElementById('directLookupLink').href = fullUrl;
+
+    const qrWrap = document.getElementById('qrcodeCanvasWrap');
+    qrWrap.innerHTML = '';
+
+    const notice = document.getElementById('qrLengthNotice');
+    if (fullUrl.length > 2600) {
+      notice.style.color = 'var(--danger)';
+      notice.textContent = `※ 현재 링크 길이(${fullUrl.length}자)가 길어 QR 밀도가 높을 수 있습니다. 카메라 인식이 어렵다면 [조회 링크 복사]로 보내 열어보세요.`;
+    } else {
+      notice.style.color = 'var(--gray-500)';
+      notice.textContent = `링크 길이: ${fullUrl.length}자 · 스마트폰 카메라로 QR을 스캔해 바로 조회할 수 있습니다.`;
+    }
+
+    if (typeof QRCode !== 'undefined') {
+      try {
+        new QRCode(qrWrap, {
+          text: fullUrl,
+          width: 176,
+          height: 176,
+          correctLevel: QRCode.CorrectLevel.L
+        });
+      } catch (e) {
+        qrWrap.innerHTML = `<span class="helper-text">데이터가 많아 QR 도형 생성을 생략했습니다. 아래 [조회 링크 복사]를 이용해 주세요.</span>`;
+      }
+    }
+  }
+
+  function copyLookupUrl() {
+    if (!latestLookupUrl) return;
+    navigator.clipboard?.writeText(latestLookupUrl).then(() => {
+      alert('모바일 조회용 링크가 복사되었습니다!');
+    }).catch(() => {
+      prompt('아래 링크를 복사해 주세요:', latestLookupUrl);
+    });
+  }
+
+  // ==================== 대표 / 비대표 역할 분기 및 기준 파일 공유 ====================
+  function updateRoleView() {
+    const gate = document.getElementById('roleGateSection');
+    const workspace = document.getElementById('mainWorkspace');
+    const badge = document.getElementById('roleStatusBadge');
+    const dlBtn = document.getElementById('headerDownloadCriteriaBtn');
+
+    if (!state.role) {
+      gate.style.display = 'block';
+      workspace.style.display = 'none';
+      badge.textContent = '역할 미선택';
+      dlBtn.style.display = 'none';
+    } else if (state.role === 'rep') {
+      gate.style.display = 'none';
+      workspace.style.display = 'block';
+      badge.textContent = '👑 대표 교사 모드';
+      dlBtn.style.display = 'inline-flex';
+    } else {
+      gate.style.display = 'none';
+      workspace.style.display = 'block';
+      badge.textContent = '👥 일반 반 교사 모드';
+      dlBtn.style.display = 'none';
+    }
+  }
+
+  function openRoleGate() {
+    state.role = null;
+    document.getElementById('nonRepUploadBox').classList.remove('active');
+    saveState();
+    updateRoleView();
+  }
+
+  function selectRepresentativeRole() {
+    state.role = 'rep';
+    saveState();
+    updateRoleView();
+    switchTab('tab1');
+  }
+
+  function showNonRepresentativeBox() {
+    document.getElementById('nonRepUploadBox').classList.add('active');
+  }
+
+  function skipCriteriaToStudentList() {
+    state.role = 'nonrep';
+    saveState();
+    updateRoleView();
+    switchTab('tab2');
+  }
+
+  function downloadCriteriaJSON() {
+    const cleanSubjects = {};
+    SUBJECTS.forEach(sub => {
+      const cfg = state.subjects[sub];
+      cleanSubjects[sub] = {
+        enabled: cfg.enabled,
+        count: cfg.count,
+        perfectFeedback: cfg.perfectFeedback || '',
+        questions: cfg.questions.map(q => ({
+          num: q.num,
+          type: q.type,
+          points: q.points,
+          feedback: q.feedback || ''
+        }))
+      };
+    });
+
+    const payload = {
+      type: 'summative_criteria_v1',
+      maker: '은두리',
+      exportedAt: new Date().toISOString(),
+      feedbackEnabled: state.feedbackEnabled,
+      cutlines: Object.assign({}, state.cutlines),
+      subjects: cleanSubjects
+    };
+
+    const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `총괄평가_기준설정_${new Date().toISOString().slice(0,10)}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+  }
+
+  function uploadCriteriaJSON(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = function(e) {
+      try {
+        const parsed = JSON.parse(e.target.result);
+        if (!parsed.subjects || !parsed.cutlines) {
+          throw new Error('올바른 기준 설정 파일(.json)이 아닙니다.');
+        }
+
+        state.feedbackEnabled = Boolean(parsed.feedbackEnabled);
+        state.cutlines = {
+          A: Math.round(Number(parsed.cutlines.A)) || 90,
+          B: Math.round(Number(parsed.cutlines.B)) || 80,
+          C: Math.round(Number(parsed.cutlines.C)) || 70
+        };
+
+        SUBJECTS.forEach(sub => {
+          if (parsed.subjects[sub]) {
+            const incoming = parsed.subjects[sub];
+            const qs = Array.isArray(incoming.questions) && incoming.questions.length > 0
+              ? incoming.questions.map((q, i) => ({
+                  num: Number(q.num) || (i + 1),
+                  type: q.type === '서논술형' ? '서논술형' : '객관식',
+                  points: Number(q.points) || 0,
+                  feedback: String(q.feedback || '')
+                }))
+              : createDefaultQuestions(incoming.count || 20);
+
+            state.subjects[sub] = {
+              enabled: Boolean(incoming.enabled),
+              count: qs.length,
+              perfectFeedback: String(incoming.perfectFeedback || ''),
+              questions: qs
+            };
+          }
+        });
+
+        state.scores = {};
+        syncAllStudentScores();
+        state.role = 'nonrep';
+        saveState();
+        updateRoleView();
+        switchTab('tab2');
+        alert('기준 설정이 적용되었습니다! 우리 반 학생 명단을 입력하거나 업로드한 뒤 채점을 시작하세요.');
+      } catch (err) {
+        alert('기준 파일 불러오기 오류: ' + err.message);
+      }
+      event.target.value = '';
+    };
+    reader.readAsText(file);
+  }
+
+  function syncAllStudentScores() {
+    state.students.forEach(stu => {
+      if (!state.scores[stu.id]) state.scores[stu.id] = {};
+      SUBJECTS.forEach(sub => {
+        const qs = state.subjects[sub].questions;
+        if (!state.scores[stu.id][sub]) {
+          state.scores[stu.id][sub] = {
+            absent: false,
+            items: qs.map(q => q.points)
+          };
+        } else {
+          const oldItems = state.scores[stu.id][sub].items || [];
+          state.scores[stu.id][sub].items = qs.map((q, idx) => {
+            if (idx < oldItems.length && typeof oldItems[idx] === 'number') {
+              return Math.min(oldItems[idx], q.points);
+            }
+            return q.points;
+          });
+        }
+      });
+    });
+  }
+
+  function switchTab(tabId) {
+    document.querySelectorAll('.tab-btn').forEach(btn => {
+      btn.classList.toggle('active', btn.dataset.tab === tabId);
+    });
+    document.querySelectorAll('.tab-panel').forEach(panel => {
+      panel.classList.toggle('active', panel.id === tabId);
+    });
+    renderAll();
+  }
+
+  function getEnabledSubjects() {
+    return SUBJECTS.filter(s => state.subjects[s].enabled);
+  }
+
+  function getSubjectComposition(sub) {
+    const qs = state.subjects[sub].questions;
+    const totalCount = qs.length;
+    const totalPoints = Math.round(qs.reduce((acc, q) => acc + (Number(q.points) || 0), 0) * 10) / 10;
+    const essayCount = qs.filter(q => q.type === '서논술형').length;
+    const essayRate = totalCount > 0 ? Math.round((essayCount / totalCount) * 100) : 0;
+    const isHundred = Math.abs(totalPoints - 100) < 0.01;
+    const essayMeets30 = essayRate >= 30;
+    return { totalCount, totalPoints, essayCount, essayRate, isHundred, essayMeets30 };
+  }
+
+  // ==================== 1단계 렌더링 및 핸들러 ====================
+  function renderStep1() {
+    const grid = document.getElementById('subjectConfigGrid');
+    grid.innerHTML = SUBJECTS.map(sub => {
+      const cfg = state.subjects[sub];
+      return `
+        <div class="subject-card ${cfg.enabled ? 'enabled' : ''}">
+          <div class="subject-top">
+            <span class="subject-name">${sub}</span>
+            <button class="ox-toggle ${cfg.enabled ? 'on' : 'off'}" onclick="toggleSubject('${sub}')">
+              ${cfg.enabled ? 'O' : 'X'}
+            </button>
+          </div>
+          <div class="input-row">
+            <span>문항 개수</span>
+            <div>
+              <input type="number" min="1" max="100" value="${cfg.count}" style="width:72px;"
+                ${cfg.enabled ? '' : 'disabled'}
+                onchange="changeQuestionCount('${sub}', this.value)" /> 문항
+            </div>
+          </div>
+        </div>
+      `;
+    }).join('');
+
+    const fbBtn = document.getElementById('feedbackToggleBtn');
+    fbBtn.textContent = state.feedbackEnabled ? 'O' : 'X';
+    fbBtn.className = 'ox-toggle ' + (state.feedbackEnabled ? 'on' : 'off');
+
+    document.getElementById('cutA').value = Math.round(state.cutlines.A);
+    document.getElementById('cutB').value = Math.round(state.cutlines.B);
+    document.getElementById('cutC').value = Math.round(state.cutlines.C);
+    document.getElementById('labelBMax').textContent = Math.round(state.cutlines.A);
+    document.getElementById('labelCMax').textContent = Math.round(state.cutlines.B);
+    document.getElementById('labelDMax').textContent = Math.round(state.cutlines.C);
+  }
+
+  function toggleSubject(sub) {
+    const enabledList = getEnabledSubjects();
+    if (state.subjects[sub].enabled && enabledList.length <= 1) {
+      alert('최소 1개 이상의 과목은 선택(O)되어야 합니다.');
+      return;
+    }
+    state.subjects[sub].enabled = !state.subjects[sub].enabled;
+    saveState();
+    renderAll();
+  }
+
+  function toggleFeedbackEnabled() {
+    state.feedbackEnabled = !state.feedbackEnabled;
+    saveState();
+    renderAll();
+  }
+
+  function changeQuestionCount(sub, val) {
+    const count = Math.max(1, Math.min(100, parseInt(val, 10) || 20));
+    state.subjects[sub].count = count;
+    const oldQs = state.subjects[sub].questions;
+    const newQs = createDefaultQuestions(count);
+    for (let i = 0; i < Math.min(oldQs.length, newQs.length); i++) {
+      newQs[i].type = oldQs[i].type;
+      newQs[i].points = oldQs[i].points;
+      newQs[i].feedback = oldQs[i].feedback || '';
+    }
+    state.subjects[sub].questions = newQs;
+    syncAllStudentScores();
+    saveState();
+    renderAll();
+  }
+
+  function applyPresetCutlines(a, b, c) {
+    state.cutlines = { A: Math.round(a), B: Math.round(b), C: Math.round(c) };
+    saveState();
+    renderAll();
+  }
+
+  function updateCutlines() {
+    const a = parseInt(document.getElementById('cutA').value, 10) || 90;
+    const b = parseInt(document.getElementById('cutB').value, 10) || 80;
+    const c = parseInt(document.getElementById('cutC').value, 10) || 70;
+    if (!(a > b && b > c && c > 0)) {
+      alert('성취율 기준은 A > B > C > 0 순서(1단위 정수)로 입력해야 합니다.');
+      renderStep1();
+      return;
+    }
+    state.cutlines = { A: a, B: b, C: c };
+    saveState();
+    renderAll();
+  }
+
+  // ==================== 2단계: 문항정보표 · 피드백 · 명단 관리 ====================
+  function renderQuestionMetricsOnly(sub) {
+    const comp = getSubjectComposition(sub);
+    const strip = document.getElementById('qMetricsStrip');
+    strip.innerHTML = `
+      <span class="status-pill ${comp.isHundred ? 'status-ok' : 'status-err'}">
+        총점: ${comp.totalPoints}점 ${comp.isHundred ? '(100점 충족)' : '(⚠️ 100점 아님!)'}
+      </span>
+      <span class="status-pill ${comp.essayMeets30 ? 'essay-ok' : 'essay-low'}">
+        서논술형: ${comp.essayCount}문항 / ${comp.totalCount}문항 (${comp.essayRate}%)
+        ${comp.essayMeets30 ? '· 30% 이상 충족' : '· 30% 미만'}
+      </span>
+    `;
+
+    const summaryBar = document.getElementById('questionSummaryBar');
+    const enabled = getEnabledSubjects();
+    summaryBar.innerHTML = enabled.map(s => {
+      const c = getSubjectComposition(s);
+      return `
+        <span class="status-pill ${c.isHundred ? 'status-ok' : 'status-err'}">
+          ${s}: 총점 ${c.totalPoints}점 ${c.isHundred ? '✓' : '⚠️'}
+        </span>
+        <span class="status-pill ${c.essayMeets30 ? 'essay-ok' : 'essay-low'}">
+          서논술 ${c.essayCount}문항(${c.essayRate}%)
+        </span>
+      `;
+    }).join('');
+  }
+
+  function renderStep2() {
+    const enabled = getEnabledSubjects();
+    if (!enabled.includes(state.activeQEditorSubject)) {
+      state.activeQEditorSubject = enabled[0];
+    }
+    if (!enabled.includes(state.activeFbEditorSubject)) {
+      state.activeFbEditorSubject = enabled[0];
+    }
+
+    const curSub = state.activeQEditorSubject;
+    renderQuestionMetricsOnly(curSub);
+
+    document.getElementById('qEditorSubTabs').innerHTML = enabled.map(sub => `
+      <button class="sub-tab-btn ${state.activeQEditorSubject === sub ? 'active' : ''}"
+        onclick="state.activeQEditorSubject='${sub}'; renderStep2();">
+        ${sub} 문항정보표
+      </button>
+    `).join('');
+
+    const qs = state.subjects[curSub].questions;
+    document.getElementById('qEditorTableContainer').innerHTML = `
+      <div class="table-wrap" style="max-height: 360px;">
+        <table>
+          <thead>
+            <tr>
+              <th style="width:100px;">문항번호</th>
+              <th style="width:180px;">문항유형 (기본: 객관식)</th>
+              <th style="width:150px;">배점</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${qs.map((q, idx) => `
+              <tr>
+                <td><strong>${q.num}번</strong></td>
+                <td>
+                  <select onchange="updateQuestionTypeNoScroll('${curSub}', ${idx}, this.value)">
+                    <option value="객관식" ${q.type === '객관식' ? 'selected' : ''}>객관식</option>
+                    <option value="서논술형" ${q.type === '서논술형' ? 'selected' : ''}>서논술형</option>
+                  </select>
+                </td>
+                <td>
+                  <input type="number" step="0.5" min="0.5" max="100" value="${q.points}" style="width:90px; text-align:center;"
+                    onchange="updateQuestionPointsNoScroll('${curSub}', ${idx}, this.value)" /> 점
+                </td>
+              </tr>
+            `).join('')}
+          </tbody>
+        </table>
+      </div>
+    `;
+
+    const fbCard = document.getElementById('feedbackSetupCard');
+    const studentTitle = document.getElementById('studentCardTitle');
+    if (state.feedbackEnabled) {
+      fbCard.style.display = 'block';
+      studentTitle.textContent = '2-3. 학생 명단 양식 다운로드(기본 30명) · 업로드 · 응시/미응시/전학 관리';
+
+      document.getElementById('feedbackSummaryBar').innerHTML = enabled.map(sub => {
+        const subQs = state.subjects[sub].questions;
+        const filled = subQs.filter(q => (q.feedback || '').trim().length > 0).length;
+        const hasPerfect = (state.subjects[sub].perfectFeedback || '').trim().length > 0;
+        const isComplete = filled === subQs.length && hasPerfect;
+        return `
+          <span class="status-pill ${isComplete ? 'status-ok' : 'status-err'}">
+            ${sub}: 문항 피드백 ${filled}/${subQs.length}개 · 만점 피드백 ${hasPerfect ? '입력됨 ✓' : '미입력'}
+          </span>
+        `;
+      }).join('');
+
+      document.getElementById('fbEditorSubTabs').innerHTML = enabled.map(sub => `
+        <button class="sub-tab-btn ${state.activeFbEditorSubject === sub ? 'active' : ''}"
+          onclick="state.activeFbEditorSubject='${sub}'; renderStep2();">
+          ${sub} 피드백
+        </button>
+      `).join('');
+
+      const curFbSub = state.activeFbEditorSubject;
+      const fbQs = state.subjects[curFbSub].questions;
+      const perfectFb = state.subjects[curFbSub].perfectFeedback || '';
+      document.getElementById('fbEditorTableContainer').innerHTML = `
+        <div class="table-wrap" style="max-height: 380px;">
+          <table>
+            <thead>
+              <tr>
+                <th style="width:120px;">구분</th>
+                <th style="width:110px;">문항유형</th>
+                <th>피드백 문구 (예: 글의 중심 내용을 파악함)</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${fbQs.map((q, idx) => `
+                <tr>
+                  <td><strong>${q.num}번</strong></td>
+                  <td id="fbTypeCell_${curFbSub}_${idx}">${q.type}</td>
+                  <td style="text-align:left;">
+                    <input type="text" value="${escapeHtml(q.feedback || '')}"
+                      placeholder="${q.num}번 문항 오답/감점 시 들어갈 피드백 입력"
+                      style="width:100%;"
+                      onchange="updateSingleFeedback('${curFbSub}', ${idx}, this.value)" />
+                  </td>
+                </tr>
+              `).join('')}
+              <tr style="background:#fef3c7;">
+                <td><strong>다 맞았을 때</strong></td>
+                <td>만점</td>
+                <td style="text-align:left;">
+                  <input type="text" value="${escapeHtml(perfectFb)}"
+                    placeholder="모든 문항을 맞혔을 때 들어갈 칭찬·종합 피드백 입력"
+                    style="width:100%;"
+                    onchange="updatePerfectFeedback('${curFbSub}', this.value)" />
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      `;
+    } else {
+      fbCard.style.display = 'none';
+      studentTitle.textContent = '2-2. 학생 명단 양식 다운로드(기본 30명) · 업로드 · 응시/미응시/전학 관리';
+    }
+
+    const sBody = document.getElementById('studentListBody');
+    sBody.innerHTML = state.students.map((stu, idx) => {
+      const st = normalizeStudentStatus(stu);
+      const rowCls = st === 'transferred' ? 'transfer-row' : (st === 'absentAll' ? 'absent-row' : '');
+      return `
+        <tr class="${rowCls}">
+          <td>
+            <input type="number" value="${stu.num}" style="width:60px; text-align:center;"
+              onchange="updateStudentField(${idx}, 'num', this.value)" />
+          </td>
+          <td>
+            <input type="text" value="${escapeHtml(stu.name)}" style="width:120px; text-align:center;"
+              onchange="updateStudentField(${idx}, 'name', this.value)" />
+          </td>
+          <td>
+            <select onchange="changeStudentStatus(${idx}, this.value)" style="font-weight:700;">
+              <option value="active" ${st === 'active' ? 'selected' : ''}>✅ 응시</option>
+              <option value="absentAll" ${st === 'absentAll' ? 'selected' : ''}>🚫 미응시</option>
+              <option value="transferred" ${st === 'transferred' ? 'selected' : ''}>🚚 전학</option>
+            </select>
+          </td>
+          <td>
+            <button class="btn-sm btn-danger" onclick="removeStudent(${idx})">삭제</button>
+          </td>
+        </tr>
+      `;
+    }).join('');
+  }
+
+  function updateQuestionTypeNoScroll(sub, idx, val) {
+    state.subjects[sub].questions[idx].type = val;
+    saveState();
+    renderQuestionMetricsOnly(sub);
+    const fbTypeEl = document.getElementById(`fbTypeCell_${sub}_${idx}`);
+    if (fbTypeEl) fbTypeEl.textContent = val;
+  }
+
+  function updateQuestionPointsNoScroll(sub, idx, val) {
+    const pt = Math.max(0.1, parseFloat(val) || 1);
+    state.subjects[sub].questions[idx].points = pt;
+    syncAllStudentScores();
+    saveState();
+    renderQuestionMetricsOnly(sub);
+  }
+
+  function escapeHtml(str) {
+    return String(str)
+      .replace(/&/g, '&amp;')
+      .replace(/"/g, '&quot;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;');
+  }
+
+  function updateSingleFeedback(sub, idx, val) {
+    state.subjects[sub].questions[idx].feedback = val.trim();
+    saveState();
+  }
+
+  function updatePerfectFeedback(sub, val) {
+    state.subjects[sub].perfectFeedback = val.trim();
+    saveState();
+  }
+
+  function downloadQuestionTemplate() {
+    const enabled = getEnabledSubjects();
+    const wb = XLSX.utils.book_new();
+
+    enabled.forEach(sub => {
+      const qs = state.subjects[sub].questions;
+      const rows = [['문항번호', '문항유형', '배점']];
+      qs.forEach(q => {
+        rows.push([q.num, q.type, q.points]);
+      });
+      rows.push(['합계', '', { f: `SUM(C2:C${qs.length + 1})` }]);
+
+      const ws = XLSX.utils.aoa_to_sheet(rows);
+      ws['!cols'] = [{ wch: 12 }, { wch: 16 }, { wch: 12 }];
+      XLSX.utils.book_append_sheet(wb, ws, sub);
+    });
+
+    XLSX.writeFile(wb, '총괄평가_문항정보표_양식.xlsx');
+  }
+
+  function uploadQuestionTemplate(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = function(e) {
+      try {
+        const data = new Uint8Array(e.target.result);
+        const wb = XLSX.read(data, { type: 'array' });
+        let updatedSubjects = [];
+
+        wb.SheetNames.forEach(sheetName => {
+          const cleanName = sheetName.trim();
+          if (SUBJECTS.includes(cleanName)) {
+            const ws = wb.Sheets[sheetName];
+            const jsonRows = XLSX.utils.sheet_to_json(ws, { defval: '' });
+            const oldQs = state.subjects[cleanName].questions;
+            const parsedQs = [];
+
+            jsonRows.forEach((row) => {
+              const rawNum = row['문항번호'] ?? row['번호'];
+              if (rawNum === '합계' || rawNum === '' || isNaN(Number(rawNum))) return;
+
+              const rawType = String(row['문항유형'] ?? row['유형'] ?? '객관식').trim();
+              const type = (rawType.includes('서술') || rawType.includes('논술')) ? '서논술형' : '객관식';
+              const points = parseFloat(row['배점']) || 0;
+              const num = Number(rawNum);
+              const existingFb = oldQs.find(oq => oq.num === num)?.feedback || '';
+
+              parsedQs.push({
+                num,
+                type,
+                points,
+                feedback: existingFb
+              });
+            });
+
+            if (parsedQs.length > 0) {
+              state.subjects[cleanName].enabled = true;
+              state.subjects[cleanName].count = parsedQs.length;
+              state.subjects[cleanName].questions = parsedQs;
+              updatedSubjects.push(`${cleanName}(${parsedQs.length}문항)`);
+            }
+          }
+        });
+
+        if (updatedSubjects.length === 0) {
+          alert('유효한 과목 시트(국어, 수학, 사회, 과학, 영어)를 찾지 못했습니다.');
+        } else {
+          syncAllStudentScores();
+          saveState();
+          renderAll();
+          alert(`문항정보표 업로드 완료!\n반영된 과목: ${updatedSubjects.join(', ')}`);
+        }
+      } catch (err) {
+        alert('엑셀 파일을 읽는 중 오류가 발생했습니다: ' + err.message);
+      }
+      event.target.value = '';
+    };
+    reader.readAsArrayBuffer(file);
+  }
+
+  function downloadFeedbackTemplate() {
+    const enabled = getEnabledSubjects();
+    const wb = XLSX.utils.book_new();
+
+    enabled.forEach(sub => {
+      const qs = state.subjects[sub].questions;
+      const rows = [['문항번호', '문항유형', '피드백']];
+      qs.forEach(q => {
+        rows.push([q.num, q.type, q.feedback || '']);
+      });
+      rows.push(['다 맞았을 때', '만점', state.subjects[sub].perfectFeedback || '']);
+
+      const ws = XLSX.utils.aoa_to_sheet(rows);
+      ws['!cols'] = [{ wch: 16 }, { wch: 14 }, { wch: 65 }];
+      XLSX.utils.book_append_sheet(wb, ws, sub);
+    });
+
+    XLSX.writeFile(wb, '총괄평가_피드백_양식.xlsx');
+  }
+
+  function uploadFeedbackTemplate(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = function(e) {
+      try {
+        const data = new Uint8Array(e.target.result);
+        const wb = XLSX.read(data, { type: 'array' });
+        let updatedList = [];
+
+        wb.SheetNames.forEach(sheetName => {
+          const cleanName = sheetName.trim();
+          if (SUBJECTS.includes(cleanName)) {
+            const ws = wb.Sheets[sheetName];
+            const rows = XLSX.utils.sheet_to_json(ws, { defval: '' });
+            const qs = state.subjects[cleanName].questions;
+            let countApplied = 0;
+
+            rows.forEach(row => {
+              const keyRaw = String(row['문항번호'] ?? row['번호'] ?? row['구분'] ?? '').trim();
+              const fbText = String(row['피드백'] ?? row['내용'] ?? '').trim();
+              if (!keyRaw) return;
+
+              if (keyRaw.includes('다 맞') || keyRaw.includes('다맞') || keyRaw.includes('만점')) {
+                state.subjects[cleanName].perfectFeedback = fbText;
+                countApplied++;
+              } else {
+                const qNum = parseInt(keyRaw, 10);
+                if (!isNaN(qNum)) {
+                  const targetQ = qs.find(q => q.num === qNum);
+                  if (targetQ) {
+                    targetQ.feedback = fbText;
+                    countApplied++;
+                  }
+                }
+              }
+            });
+
+            if (countApplied > 0) {
+              updatedList.push(cleanName);
+            }
+          }
+        });
+
+        if (updatedList.length === 0) {
+          alert('과목 시트(국어, 수학, 사회, 과학, 영어)에서 피드백 데이터를 찾지 못했습니다.');
+        } else {
+          saveState();
+          renderAll();
+          alert(`피드백 업로드 완료!\n반영된 과목: ${updatedList.join(', ')}`);
+        }
+      } catch (err) {
+        alert('피드백 엑셀 업로드 오류: ' + err.message);
+      }
+      event.target.value = '';
+    };
+    reader.readAsArrayBuffer(file);
+  }
+
+  function downloadStudentTemplate() {
+    const wb = XLSX.utils.book_new();
+    const rows = [['번호', '이름', '응시여부']];
+    for (let i = 1; i <= 30; i++) {
+      const existing = state.students.find(s => Number(s.num) === i);
+      let stLabel = '응시';
+      if (existing) {
+        const st = normalizeStudentStatus(existing);
+        if (st === 'absentAll') stLabel = '미응시';
+        else if (st === 'transferred') stLabel = '전학';
+      }
+      rows.push([i, existing ? existing.name : '', stLabel]);
+    }
+    rows.push([]);
+    rows.push(['안내', '1~30번 양식에서 남는 행은 삭제하고 명단을 입력하세요.', '응시여부: 응시 / 미응시 / 전학']);
+
+    const ws = XLSX.utils.aoa_to_sheet(rows);
+    ws['!cols'] = [{ wch: 10 }, { wch: 18 }, { wch: 18 }];
+    XLSX.utils.book_append_sheet(wb, ws, '학생명단');
+    XLSX.writeFile(wb, '총괄평가_학생명단_양식_30명.xlsx');
+  }
+
+  function uploadStudentTemplate(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = function(e) {
+      try {
+        const data = new Uint8Array(e.target.result);
+        const wb = XLSX.read(data, { type: 'array' });
+        const ws = wb.Sheets[wb.SheetNames[0]];
+        const rows = XLSX.utils.sheet_to_json(ws, { defval: '' });
+
+        const newStudents = [];
+        rows.forEach((row, idx) => {
+          const rawNum = String(row['번호'] ?? '').trim();
+          if (rawNum === '안내') return;
+
+          const statusStr = String(row['응시여부'] ?? '').trim();
+          const isTransfer = statusStr.includes('전학');
+          const isAbsent = statusStr.includes('미응시') || statusStr.includes('안봄') || statusStr.includes('결시');
+
+          let name = String(row['이름'] ?? row['성명'] ?? '').trim();
+          if (!name && isTransfer && rawNum && !isNaN(Number(rawNum))) {
+            name = '전학';
+          }
+          if (!name) return;
+
+          const num = parseInt(rawNum, 10) || (idx + 1);
+          const status = isTransfer ? 'transferred' : (isAbsent ? 'absentAll' : 'active');
+
+          newStudents.push({
+            id: 'stu_' + Date.now() + '_' + idx,
+            num,
+            name,
+            status,
+            absentAll: status === 'absentAll'
+          });
+        });
+
+        if (newStudents.length === 0) {
+          alert('반영할 학생 명단이 없습니다. [번호], [이름], [응시여부] 열을 확인해 주세요.');
+        } else {
+          state.students = newStudents;
+          state.scores = {};
+          syncAllStudentScores();
+          saveState();
+          renderAll();
+          alert(`총 ${newStudents.length}명의 학생 명단이 반영되었습니다.`);
+        }
+      } catch (err) {
+        alert('명단 업로드 오류: ' + err.message);
+      }
+      event.target.value = '';
+    };
+    reader.readAsArrayBuffer(file);
+  }
+
+  function addSingleStudent() {
+    const nextNum = state.students.length > 0 ? Math.max(...state.students.map(s => s.num)) + 1 : 1;
+    state.students.push({
+      id: 'stu_' + Date.now(),
+      num: nextNum,
+      name: `학생${nextNum}`,
+      status: 'active',
+      absentAll: false
+    });
+    syncAllStudentScores();
+    saveState();
+    renderAll();
+  }
+
+  function removeStudent(idx) {
+    const stu = state.students[idx];
+    delete state.scores[stu.id];
+    state.students.splice(idx, 1);
+    saveState();
+    renderAll();
+  }
+
+  function updateStudentField(idx, field, val) {
+    if (field === 'num') state.students[idx].num = parseInt(val, 10) || (idx + 1);
+    if (field === 'name') state.students[idx].name = val.trim() || '이름없음';
+    saveState();
+    renderAll();
+  }
+
+  function changeStudentStatus(idx, newStatus) {
+    state.students[idx].status = newStatus;
+    state.students[idx].absentAll = (newStatus === 'absentAll');
+    saveState();
+    renderAll();
+  }
+
+  // ==================== 성적 및 피드백 계산 ====================
+  function calcGrade(rate) {
+    if (rate >= state.cutlines.A) return 'A';
+    if (rate >= state.cutlines.B) return 'B';
+    if (rate >= state.cutlines.C) return 'C';
+    return 'D';
+  }
+
+  function formatFeedbackSentences(rawList) {
+    const cleaned = rawList
+      .map(s => String(s || '').trim().replace(/\.+$/, '').trim())
+      .filter(s => s.length > 0);
+    if (cleaned.length === 0) return '';
+    return cleaned.map(s => s + '.').join(' ');
+  }
+
+  function getStudentSubjectFeedback(stu, sub) {
+    const res = getStudentSubjectResult(stu, sub);
+    if (res.transferred) return '전학';
+    if (res.absent) return '미응시';
+
+    const qs = state.subjects[sub].questions;
+    const items = state.scores[stu.id]?.[sub]?.items || [];
+    const missedFeedbacks = [];
+    let hasAnyDeduction = false;
+
+    qs.forEach((q, idx) => {
+      const earned = Number(items[idx]) || 0;
+      if (earned < q.points) {
+        hasAnyDeduction = true;
+        if ((q.feedback || '').trim()) {
+          missedFeedbacks.push(q.feedback);
+        }
+      }
+    });
+
+    if (!hasAnyDeduction) {
+      return formatFeedbackSentences([state.subjects[sub].perfectFeedback || '']);
+    }
+    return formatFeedbackSentences(missedFeedbacks);
+  }
+
+  function getStudentSubjectResult(stu, sub) {
+    const qs = state.subjects[sub].questions;
+    const maxScore = Math.round(qs.reduce((a, q) => a + q.points, 0) * 10) / 10;
+    const stStatus = normalizeStudentStatus(stu);
+    const record = state.scores[stu.id]?.[sub];
+
+    if (stStatus === 'transferred') {
+      return { transferred: true, absent: false, score: 0, maxScore, rate: 0, grade: '전학' };
+    }
+
+    if (stStatus === 'absentAll' || record?.absent) {
+      return { transferred: false, absent: true, score: 0, maxScore, rate: 0, grade: '미응시' };
+    }
+
+    const items = record?.items || [];
+    const rawSum = items.reduce((a, b) => a + (Number(b) || 0), 0);
+    const score = Math.round(rawSum * 10) / 10;
+    const rate = maxScore > 0 ? Math.round((score / maxScore) * 100) : 0;
+    const grade = calcGrade(rate);
+
+    return { transferred: false, absent: false, score, maxScore, rate, grade };
+  }
+
+  // ==================== 3단계: 문항별 채점 화면 ====================
+  function renderStep3() {
+    const enabled = getEnabledSubjects();
+    if (!enabled.includes(state.activeGradingSubject)) {
+      state.activeGradingSubject = enabled[0];
+    }
+
+    const curSub = state.activeGradingSubject;
+    const qs = state.subjects[curSub].questions;
+    const comp = getSubjectComposition(curSub);
+
+    document.getElementById('gradingSubTabs').innerHTML = enabled.map(sub => `
+      <button class="sub-tab-btn ${curSub === sub ? 'active' : ''}"
+        onclick="state.activeGradingSubject='${sub}'; renderStep3();">
+        ${sub} 채점하기
+      </button>
+    `).join('');
+
+    const activeStudents = state.students.filter(s => {
+      const st = normalizeStudentStatus(s);
+      return st === 'active' && !state.scores[s.id]?.[curSub]?.absent;
+    });
+
+    document.getElementById('gradingInfoBanner').innerHTML = `
+      <div class="toolbar-group">
+        <strong>[${curSub}]</strong>
+        <span>총 ${qs.length}문항</span>
+        <span class="status-pill ${comp.isHundred ? 'status-ok' : 'status-err'}">만점: ${comp.totalPoints}점</span>
+        <span class="status-pill ${comp.essayMeets30 ? 'essay-ok' : 'essay-low'}">서논술 ${comp.essayCount}문항(${comp.essayRate}%)</span>
+        <span>응시: <strong>${activeStudents.length}명</strong></span>
+      </div>
+      <div class="helper-text">※ 문항 번호 머리글 클릭 시 전체 정답/오답 일괄 전환 (정답률 1단위 정수)</div>
+    `;
+
+    const qRates = qs.map((q, qIdx) => {
+      if (activeStudents.length === 0) return '-';
+      const earnedSum = activeStudents.reduce((acc, stu) => acc + (state.scores[stu.id][curSub].items[qIdx] || 0), 0);
+      const maxPossible = activeStudents.length * q.points;
+      const pct = maxPossible > 0 ? Math.round((earnedSum / maxPossible) * 100) : 0;
+      return pct + '%';
+    });
+
+    const thead = document.getElementById('gradingThead');
+    thead.innerHTML = `
+      <tr>
+        <th class="sticky-col-1">번호</th>
+        <th class="sticky-col-2">이름</th>
+        <th style="width:84px;">과목응시</th>
+        ${qs.map((q, idx) => `
+          <th class="q-header ${q.type === '서논술형' ? 'essay-col' : ''}"
+              onclick="toggleColumnAll('${curSub}', ${idx})"
+              title="클릭 시 ${q.num}번 문항 전체 정답/오답 일괄 전환">
+            <div>${q.num}번</div>
+            <span class="q-meta">${q.type === '서논술형' ? '서논술' : '객관'}·${q.points}점</span>
+            <span class="q-rate">${qRates[idx]}</span>
+          </th>
+        `).join('')}
+        <th style="min-width:68px;">총점</th>
+        <th style="min-width:74px;">성취율</th>
+        <th style="min-width:64px;">등급</th>
+      </tr>
+    `;
+
+    const tbody = document.getElementById('gradingTbody');
+    tbody.innerHTML = state.students.map((stu, sIdx) => {
+      const stStatus = normalizeStudentStatus(stu);
+      const res = getStudentSubjectResult(stu, curSub);
+      const subAbsent = state.scores[stu.id]?.[curSub]?.absent || false;
+      const isTransferred = stStatus === 'transferred';
+      const isAbsent = !isTransferred && (stStatus === 'absentAll' || subAbsent);
+      const items = state.scores[stu.id][curSub].items;
+      const rowCls = isTransferred ? 'transfer-row' : (isAbsent ? 'absent-row' : '');
+
+      return `
+        <tr class="${rowCls}">
+          <td class="sticky-col-1">${stu.num}</td>
+          <td class="sticky-col-2">${escapeHtml(stu.name)}</td>
+          <td>
+            ${isTransferred
+              ? `<span class="grade-badge grade-TR">전학</span>`
+              : `<button class="btn-sm ${isAbsent ? 'btn-danger' : ''}"
+                  ${stStatus === 'absentAll' ? 'disabled title="전체 미응시로 설정됨"' : ''}
+                  onclick="toggleSubjectAbsent('${stu.id}', '${curSub}')">
+                  ${stStatus === 'absentAll' ? '전체미응시' : (subAbsent ? '미응시' : '응시')}
+                </button>`
+            }
+          </td>
+          ${qs.map((q, qIdx) => {
+            if (isTransferred || isAbsent) return `<td>-</td>`;
+            const earned = items[qIdx];
+            if (q.type === '객관식') {
+              const isCorrect = earned >= q.points;
+              return `
+                <td class="obj-cell ${isCorrect ? 'obj-correct' : 'obj-wrong'}"
+                    onclick="toggleObjAnswer('${stu.id}', '${curSub}', ${qIdx})">
+                  ${isCorrect ? 'O' : 'X'}
+                </td>
+              `;
+            } else {
+              let cls = 'essay-input';
+              if (earned === 0) cls += ' zero';
+              else if (earned < q.points) cls += ' partial';
+
+              return `
+                <td>
+                  <input type="number" class="${cls}"
+                    data-sidx="${sIdx}" data-qidx="${qIdx}"
+                    min="0" max="${q.points}" step="0.5" value="${earned}"
+                    onfocus="this.select()"
+                    onchange="updateEssayScore('${stu.id}', '${curSub}', ${qIdx}, this.value)"
+                    onkeydown="handleEssayKeyNav(event, ${sIdx}, ${qIdx})" />
+                </td>
+              `;
+            }
+          }).join('')}
+          <td><strong>${(isTransferred || isAbsent) ? '-' : res.score}</strong></td>
+          <td>${(isTransferred || isAbsent) ? '-' : res.rate + '%'}</td>
+          <td>
+            <span class="grade-badge ${isTransferred ? 'grade-TR' : (isAbsent ? 'grade-NA' : 'grade-' + res.grade)}">
+              ${res.grade}
+            </span>
+          </td>
+        </tr>
+      `;
+    }).join('');
+  }
+
+  function toggleObjAnswer(stuId, sub, qIdx) {
+    const q = state.subjects[sub].questions[qIdx];
+    const cur = state.scores[stuId][sub].items[qIdx];
+    state.scores[stuId][sub].items[qIdx] = (cur >= q.points) ? 0 : q.points;
+    saveState();
+    renderStep3();
+  }
+
+  function updateEssayScore(stuId, sub, qIdx, rawVal) {
+    const q = state.subjects[sub].questions[qIdx];
+    let val = parseFloat(rawVal);
+    if (isNaN(val) || val < 0) val = 0;
+    if (val > q.points) {
+      alert(`해당 문항의 최대 배점은 ${q.points}점입니다.`);
+      val = q.points;
+    }
+    state.scores[stuId][sub].items[qIdx] = Math.round(val * 10) / 10;
+    saveState();
+    renderStep3();
+  }
+
+  function handleEssayKeyNav(e, sIdx, qIdx) {
+    if (e.key === 'Enter' || e.key === 'ArrowDown') {
+      e.preventDefault();
+      const next = document.querySelector(`.essay-input[data-sidx="${sIdx + 1}"][data-qidx="${qIdx}"]`);
+      if (next) next.focus();
+    } else if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      const prev = document.querySelector(`.essay-input[data-sidx="${sIdx - 1}"][data-qidx="${qIdx}"]`);
+      if (prev) prev.focus();
+    }
+  }
+
+  function toggleColumnAll(sub, qIdx) {
+    const q = state.subjects[sub].questions[qIdx];
+    const activeStudents = state.students.filter(s => {
+      const st = normalizeStudentStatus(s);
+      return st === 'active' && !state.scores[s.id][sub].absent;
+    });
+    if (activeStudents.length === 0) return;
+
+    const allPerfect = activeStudents.every(s => state.scores[s.id][sub].items[qIdx] >= q.points);
+    const targetVal = allPerfect ? 0 : q.points;
+
+    activeStudents.forEach(s => {
+      state.scores[s.id][sub].items[qIdx] = targetVal;
+    });
+    saveState();
+    renderStep3();
+  }
+
+  function setAllStudentsPerfectCurrentSubject() {
+    const sub = state.activeGradingSubject;
+    if (!confirm(`[${sub}] 과목의 응시 학생 점수를 전원 정답(만점) 상태로 초기화할까요?`)) return;
+    const qs = state.subjects[sub].questions;
+    state.students.forEach(s => {
+      if (normalizeStudentStatus(s) !== 'transferred') {
+        state.scores[s.id][sub].items = qs.map(q => q.points);
+      }
+    });
+    saveState();
+    renderStep3();
+  }
+
+  function toggleSubjectAbsent(stuId, sub) {
+    state.scores[stuId][sub].absent = !state.scores[stuId][sub].absent;
+    saveState();
+    renderStep3();
+  }
+
+  // ==================== 4단계: 통계 · 종합 일람표 · 상세 모달 ====================
+  function computeSubjectStats(sub) {
+    const qs = state.subjects[sub].questions;
+    const maxScore = Math.round(qs.reduce((a, q) => a + q.points, 0) * 10) / 10;
+    let transferred = 0;
+    let attended = 0;
+    let absent = 0;
+    let scoreSum = 0;
+    const counts = { A: 0, B: 0, C: 0, D: 0 };
+
+    state.students.forEach(stu => {
+      const res = getStudentSubjectResult(stu, sub);
+      if (res.transferred) {
+        transferred++;
+      } else if (res.absent) {
+        absent++;
+      } else {
+        attended++;
+        scoreSum += res.score;
+        counts[res.grade]++;
+      }
+    });
+
+    const enrolled = attended + absent;
+    const avg = attended > 0 ? Math.round(scoreSum / attended) : 0;
+    const pct = (cnt) => attended > 0 ? Math.round((cnt / attended) * 100) : 0;
+
+    return {
+      sub,
+      maxScore,
+      enrolled,
+      attended,
+      absent,
+      transferred,
+      avg,
+      counts,
+      rates: {
+        A: pct(counts.A),
+        B: pct(counts.B),
+        C: pct(counts.C),
+        D: pct(counts.D)
+      }
+    };
+  }
+
+  function renderStep4() {
+    const enabled = getEnabledSubjects();
+    document.getElementById('mmFeedbackBadge').style.display = state.feedbackEnabled ? 'inline-flex' : 'none';
+
+    const statsBody = document.getElementById('statsTableBody');
+    statsBody.innerHTML = enabled.map(sub => {
+      const st = computeSubjectStats(sub);
+      return `
+        <tr>
+          <td><strong>${st.sub}</strong></td>
+          <td>${st.maxScore}점</td>
+          <td>${st.enrolled}명</td>
+          <td><strong>${st.attended}명</strong></td>
+          <td style="color:${st.absent > 0 ? 'var(--danger)' : 'inherit'}; font-weight:700;">${st.absent}명</td>
+          <td>${st.transferred}명</td>
+          <td>${st.attended > 0 ? st.avg + '점' : '-'}</td>
+          <td><span class="grade-badge grade-A">A</span> ${st.counts.A}명 (${st.rates.A}%)</td>
+          <td><span class="grade-badge grade-B">B</span> ${st.counts.B}명 (${st.rates.B}%)</td>
+          <td><span class="grade-badge grade-C">C</span> ${st.counts.C}명 (${st.rates.C}%)</td>
+          <td><span class="grade-badge grade-D">D</span> ${st.counts.D}명 (${st.rates.D}%)</td>
+        </tr>
+      `;
+    }).join('');
+
+    const sHead = document.getElementById('summaryThead');
+    sHead.innerHTML = `
+      <tr>
+        <th style="width:65px;">번호</th>
+        <th style="width:110px;">이름 (클릭)</th>
+        ${enabled.map(sub => `<th>${sub} 점수</th><th>${sub} 성취율</th><th>${sub} 등급</th>`).join('')}
+      </tr>
+    `;
+
+    const sBody = document.getElementById('summaryTbody');
+    sBody.innerHTML = state.students.map((stu, idx) => {
+      const stStatus = normalizeStudentStatus(stu);
+      const rowCls = stStatus === 'transferred' ? 'transfer-row' : (stStatus === 'absentAll' ? 'absent-row' : '');
+      return `
+        <tr class="${rowCls}">
+          <td>${stu.num}</td>
+          <td>
+            <span class="student-link" onclick="openStudentDetailModal(${idx})">${escapeHtml(stu.name)}</span>
+          </td>
+          ${enabled.map(sub => {
+            const res = getStudentSubjectResult(stu, sub);
+            if (res.transferred) {
+              return `<td>전학</td><td>-</td><td><span class="grade-badge grade-TR">전학</span></td>`;
+            }
+            if (res.absent) {
+              return `<td>-</td><td>-</td><td><span class="grade-badge grade-NA">미응시</span></td>`;
+            }
+            return `
+              <td>${res.score} / ${res.maxScore}</td>
+              <td>${res.rate}%</td>
+              <td><span class="grade-badge grade-${res.grade}">${res.grade}</span></td>
+            `;
+          }).join('')}
+        </tr>
+      `;
+    }).join('');
+  }
+
+  function openStudentDetailModal(stuIdx) {
+    const stu = state.students[stuIdx];
+    const enabled = getEnabledSubjects();
+    document.getElementById('modalStudentTitle').textContent = `📋 ${stu.num}번 ${stu.name} — 과목별 성적 · 오답 · 피드백 상세`;
+
+    const bodyHtml = enabled.map(sub => {
+      const res = getStudentSubjectResult(stu, sub);
+      const qs = state.subjects[sub].questions;
+      const items = state.scores[stu.id][sub].items;
+
+      if (res.transferred) {
+        return `
+          <div class="card" style="padding:14px; margin-bottom:12px; background:var(--gray-100);">
+            <strong>${sub}</strong> : <span class="grade-badge grade-TR">전학 (통계 제외)</span>
+          </div>
+        `;
+      }
+
+      if (res.absent) {
+        return `
+          <div class="card" style="padding:14px; margin-bottom:12px; background:var(--gray-100);">
+            <strong>${sub}</strong> : <span class="grade-badge grade-NA">미응시</span>
+          </div>
+        `;
+      }
+
+      const wrongList = [];
+      const partialList = [];
+
+      qs.forEach((q, idx) => {
+        const earned = items[idx];
+        if (earned === 0) {
+          wrongList.push(`${q.num}번(${q.type}, -${q.points}점)`);
+        } else if (earned < q.points) {
+          partialList.push(`${q.num}번(${q.type}, ${earned}/${q.points}점)`);
+        }
+      });
+
+      const fbSentence = state.feedbackEnabled ? getStudentSubjectFeedback(stu, sub) : '';
+
+      return `
+        <div class="card" style="padding:14px; margin-bottom:12px;">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+            <strong style="font-size:1rem;">${sub}</strong>
+            <div>
+              <span>점수: <strong>${res.score} / ${res.maxScore}점</strong></span> ·
+              <span>성취율: <strong>${res.rate}%</strong></span> ·
+              <span class="grade-badge grade-${res.grade}">${res.grade} 등급</span>
+            </div>
+          </div>
+          <div style="font-size:0.86rem;">
+            ${(wrongList.length === 0 && partialList.length === 0)
+              ? `<span class="perfect-chip">🎉 만점 (틀린 문항 없음)</span>`
+              : `
+                ${wrongList.length > 0 ? `<div><strong>틀린 문항(0점):</strong> ${wrongList.map(w => `<span class="wrong-chip">${w}</span>`).join('')}</div>` : ''}
+                ${partialList.length > 0 ? `<div style="margin-top:4px;"><strong>부분 감점 문항:</strong> ${partialList.map(p => `<span class="essay-chip">${p}</span>`).join('')}</div>` : ''}
+              `
+            }
+          </div>
+          ${state.feedbackEnabled ? `
+            <div class="feedback-preview-box">
+              <strong>💬 생성된 피드백:</strong> ${fbSentence ? escapeHtml(fbSentence) : '<span style="color:var(--gray-500);">(입력된 피드백 문구가 없습니다)</span>'}
+            </div>
+          ` : ''}
+        </div>
+      `;
+    }).join('');
+
+    document.getElementById('modalStudentBody').innerHTML = bodyHtml;
+    document.getElementById('studentDetailModal').classList.add('open');
+  }
+
+  function closeStudentModal() {
+    document.getElementById('studentDetailModal').classList.remove('open');
+  }
+
+  // ==================== 엑셀 추출 ====================
+  function exportMailMergeExcel() {
+    const incScore = document.getElementById('mmIncludeScore').checked;
+    const incRate = document.getElementById('mmIncludeRate').checked;
+    const incFeedback = state.feedbackEnabled;
+    const wb = XLSX.utils.book_new();
+
+    const headers = ['번호', '이름'];
+    SUBJECTS.forEach(sub => {
+      if (incScore) headers.push(`${sub}_점수`);
+      if (incRate) headers.push(`${sub}_성취율`);
+      headers.push(`${sub}_등급`);
+      if (incFeedback) headers.push(`${sub}_피드백`);
+    });
+
+    const rows = [headers];
+    state.students.forEach(stu => {
+      const row = [stu.num, stu.name];
+      SUBJECTS.forEach(sub => {
+        if (!state.subjects[sub].enabled) {
+          if (incScore) row.push('-');
+          if (incRate) row.push('-');
+          row.push('-');
+          if (incFeedback) row.push('-');
+        } else {
+          const res = getStudentSubjectResult(stu, sub);
+          if (res.transferred) {
+            if (incScore) row.push('전학');
+            if (incRate) row.push('전학');
+            row.push('전학');
+            if (incFeedback) row.push('전학');
+          } else if (res.absent) {
+            if (incScore) row.push('미응시');
+            if (incRate) row.push('미응시');
+            row.push('미응시');
+            if (incFeedback) row.push('미응시');
+          } else {
+            if (incScore) row.push(res.score);
+            if (incRate) row.push(res.rate + '%');
+            row.push(res.grade);
+            if (incFeedback) row.push(getStudentSubjectFeedback(stu, sub));
+          }
+        }
+      });
+      rows.push(row);
+    });
+
+    const ws = XLSX.utils.aoa_to_sheet(rows);
+    XLSX.utils.book_append_sheet(wb, ws, '메일머지_성적데이터');
+    XLSX.writeFile(wb, '총괄평가_메일머지용_등급표.xlsx');
+  }
+
+  function exportStatsExcel() {
+    const enabled = getEnabledSubjects();
+    const wb = XLSX.utils.book_new();
+    const cA = Math.round(state.cutlines.A);
+    const cB = Math.round(state.cutlines.B);
+    const cC = Math.round(state.cutlines.C);
+
+    const rows = [
+      ['성취율 기준 안내', `A: ${cA}% 이상`, `B: ${cB}%~${cA}% 미만`, `C: ${cC}%~${cB}% 미만`, `D: ${cC}% 미만`],
+      [],
+      ['과목', '만점', '재적(전학제외)', '응시인원(명)', '미응시(명)', '전학(명)', '응시평균(점)', 'A_인원', 'A_비율(%)', 'B_인원', 'B_비율(%)', 'C_인원', 'C_비율(%)', 'D_인원', 'D_비율(%)']
+    ];
+
+    enabled.forEach(sub => {
+      const st = computeSubjectStats(sub);
+      rows.push([
+        st.sub,
+        st.maxScore,
+        st.enrolled,
+        st.attended,
+        st.absent,
+        st.transferred,
+        st.attended > 0 ? st.avg : 0,
+        st.counts.A, st.rates.A,
+        st.counts.B, st.rates.B,
+        st.counts.C, st.rates.C,
+        st.counts.D, st.rates.D
+      ]);
+    });
+
+    const ws = XLSX.utils.aoa_to_sheet(rows);
+    XLSX.utils.book_append_sheet(wb, ws, '성취수준_통계');
+    XLSX.writeFile(wb, '총괄평가_ABCD_성취수준_통계.xlsx');
+  }
+
+  // ==================== 전체 백업 및 초기화 ====================
+  function exportBackupJSON() {
+    const blob = new Blob([JSON.stringify(state, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `총괄평가_전체백업_${new Date().toISOString().slice(0,10)}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+  }
+
+  function importBackupJSON(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = function(e) {
+      try {
+        const parsed = JSON.parse(e.target.result);
+        if (!parsed.subjects || !parsed.students) throw new Error('올바른 백업 파일이 아닙니다.');
+        state = parsed;
+        state.students.forEach(s => {
+          s.status = normalizeStudentStatus(s);
+          s.absentAll = (s.status === 'absentAll');
+        });
+        syncAllStudentScores();
+        saveState();
+        updateRoleView();
+        renderAll();
+        alert('백업 데이터를 성공적으로 불러왔습니다.');
+      } catch (err) {
+        alert('백업 불러오기 오류: ' + err.message);
+      }
+      event.target.value = '';
+    };
+    reader.readAsText(file);
+  }
+
+  function resetAllData() {
+    if (!confirm('모든 설정, 학생 명단, 채점 데이터를 초기 상태로 되돌릴까요?')) return;
+    localStorage.removeItem(STORAGE_KEY);
+    location.reload();
+  }
+
+  function renderAll() {
+    if (mobileLookupData) {
+      renderMobileViewer();
+      return;
+    }
+    renderStep1();
+    renderStep2();
+    renderStep3();
+    renderStep4();
+  }
+
+  initApp();
+</script>
+</body>
+</html>
