@@ -1635,16 +1635,18 @@
     return enabled.length > 0 ? enabled : ['국어'];
   }
 
-  function getSubjectComposition(sub) {
-    const qs = state.subjects[sub].questions;
-    const totalCount = qs.length;
-    const totalPoints = Math.round(qs.reduce((acc, q) => acc + (Number(q.points) || 0), 0) * 10) / 10;
-    const essayCount = qs.filter(q => q.type === '서논술형').length;
-    const essayRate = totalCount > 0 ? Math.round((essayCount / totalCount) * 100) : 0;
-    const isHundred = Math.abs(totalPoints - 100) < 0.01;
-    const essayMeets30 = essayRate >= 30;
-    return { totalCount, totalPoints, essayCount, essayRate, isHundred, essayMeets30 };
-  }
+ function getSubjectComposition(sub) {
+  const qs = state.subjects[sub].questions;
+  const totalCount = qs.length;
+  const totalPoints = Math.round(qs.reduce((acc, q) => acc + (Number(q.points) || 0), 0) * 10) / 10;
+  const essayQuestions = qs.filter(q => q.type === '서논술형');
+  const essayCount = essayQuestions.length;
+  const essayPoints = Math.round(essayQuestions.reduce((acc, q) => acc + (Number(q.points) || 0), 0) * 10) / 10;
+  const essayRate = totalPoints > 0 ? Math.round((essayPoints / totalPoints) * 100) : 0;
+  const isHundred = Math.abs(totalPoints - 100) < 0.01;
+  const essayMeets30 = essayRate >= 30;
+  return { totalCount, totalPoints, essayCount, essayPoints, essayRate, isHundred, essayMeets30 };
+}
 
   // ==================== 1단계 렌더링 및 핸들러 ====================
   function renderStep1() {
