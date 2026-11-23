@@ -133,17 +133,93 @@
     .btn-danger:hover { background: var(--danger-light); }
     .btn-sm { padding: 5px 10px; font-size: 0.8rem; }
 
+    /* 시각적 강조 안내 배너 & 접이식 안내 */
+    .visual-callout {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 12px;
+      padding: 14px 16px;
+      border-radius: 10px;
+      margin-bottom: 16px;
+      border: 2px solid #93c5fd;
+      background: linear-gradient(90deg, #eff6ff 0%, #f0fdf4 100%);
+    }
+    .visual-callout.amber {
+      border-color: #f59e0b;
+      background: linear-gradient(90deg, #fffbeb 0%, #fef3c7 100%);
+    }
+    .callout-tag {
+      display: inline-flex;
+      align-items: center;
+      padding: 4px 11px;
+      border-radius: 999px;
+      font-size: 0.82rem;
+      font-weight: 800;
+      background: var(--primary);
+      color: #ffffff;
+      white-space: nowrap;
+    }
+    .visual-callout.amber .callout-tag {
+      background: #d97706;
+      color: #ffffff;
+    }
+    .callout-text {
+      font-size: 0.9rem;
+      color: var(--gray-900);
+      font-weight: 600;
+    }
+    .callout-sub {
+      font-size: 0.83rem;
+      color: var(--gray-700);
+      font-weight: 400;
+      margin-top: 2px;
+    }
+
+    details.guide-box {
+      background: var(--primary-light);
+      border: 1px solid #bfdbfe;
+      border-radius: 8px;
+      padding: 10px 14px;
+      margin-bottom: 14px;
+      font-size: 0.85rem;
+      color: var(--gray-700);
+    }
+    details.guide-box summary {
+      font-weight: 700;
+      color: var(--primary-dark);
+      cursor: pointer;
+      user-select: none;
+    }
+    details.guide-box ul {
+      margin: 8px 0 2px;
+      padding-left: 18px;
+    }
+    details.guide-box li {
+      margin-bottom: 4px;
+    }
+    .inline-tip {
+      display: inline-block;
+      margin-top: 6px;
+      padding: 5px 10px;
+      border-radius: 6px;
+      background: #f8fafc;
+      border-left: 3px solid var(--primary);
+      font-size: 0.82rem;
+      color: var(--gray-700);
+    }
+
     /* 첫 진입 대표 / 비대표 선택 화면 */
     .role-gate-wrap {
-      max-width: 820px;
-      margin: 36px auto;
+      max-width: 840px;
+      margin: 32px auto;
       padding: 0 20px;
     }
     .role-card-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(310px, 1fr));
+      grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
       gap: 18px;
-      margin-top: 16px;
+      margin-top: 14px;
     }
     .role-choice-card {
       background: #ffffff;
@@ -162,8 +238,8 @@
       margin-top: 18px;
       padding: 18px;
       border-radius: 10px;
-      background: var(--primary-light);
-      border: 1px solid #bfdbfe;
+      background: #fffbeb;
+      border: 2px solid #f59e0b;
       display: none;
     }
     .non-rep-box.active { display: block; }
@@ -683,17 +759,17 @@
     <div class="header-sub">
       <span class="maker-badge">만든 사람 : 은두리</span>
       <span id="roleStatusBadge" class="role-pill">역할 미선택</span>
-      <span>문항정보표 · 피드백 자동 조합 · 미응시/전학 통계 · 모바일 조회 링크</span>
+      <span>1단계 평가 세팅 · 2단계 학생 명단 · 3단계 채점 · 4단계 통계/메일머지</span>
     </div>
   </div>
   <div class="header-actions" id="desktopHeaderActions">
-    <button onclick="openRoleGate()">🔄 대표/비대표 선택</button>
-    <button id="headerDownloadCriteriaBtn" class="btn-primary" onclick="downloadCriteriaJSON()" style="display:none;">📤 기준 설정 다운로드</button>
-    <button class="btn-success" onclick="openLookupLinkFromAny()">🔗 모바일 조회 링크 복사</button>
-    <button onclick="exportBackupJSON()">💾 전체 백업</button>
-    <button onclick="document.getElementById('backupFileInput').click()">📂 백업 불러오기</button>
+    <button onclick="openRoleGate()" title="대표 교사 모드와 일반 반 교사 모드를 다시 선택합니다">🔄 대표/비대표 선택</button>
+    <button id="headerDownloadCriteriaBtn" class="btn-primary" onclick="downloadCriteriaJSON()" style="display:none;" title="다른 반 선생님들께 공유할 기준 파일(.json)을 내려받습니다">📤 기준 설정 다운로드</button>
+    <button class="btn-success" onclick="openLookupLinkFromAny()" title="스마트폰에서 성적과 통계를 바로 볼 수 있는 링크를 복사합니다">🔗 모바일 조회 링크 복사</button>
+    <button onclick="exportBackupJSON()" title="설정·명단·채점 내역을 파일로 저장해 둡니다">💾 전체 백업</button>
+    <button onclick="document.getElementById('backupFileInput').click()" title="이전에 저장한 전체 백업(.json) 파일을 불러옵니다">📂 백업 불러오기</button>
     <input type="file" id="backupFileInput" class="file-input-hidden" accept=".json" onchange="importBackupJSON(event)" />
-    <button class="btn-danger" onclick="resetAllData()">🗑️ 전체 초기화</button>
+    <button class="btn-danger" onclick="resetAllData()" title="모든 입력 내용을 지우고 처음 상태로 되돌립니다">🗑️ 전체 초기화</button>
   </div>
 </header>
 
@@ -704,7 +780,7 @@
       <h2>📱 모바일 성적·오답·통계 조회</h2>
       <span class="maker-badge">만든 사람 : 은두리</span>
     </div>
-    <p class="card-desc">학생 이름을 누르면 과목별 점수·등급·틀린 문항·피드백이 바로 표시됩니다.</p>
+    <p class="card-desc">학생 이름이나 번호를 누르면 과목별 점수·등급·틀린 문항·피드백이 바로 표시됩니다.</p>
 
     <div class="sub-tabs">
       <button class="sub-tab-btn active" id="mTabStudentBtn" onclick="switchMobileViewTab('student')">학생별 조회</button>
@@ -730,37 +806,53 @@
       <h2>👋 시작하기 전에 — 이번 평가의 '대표'이신가요?</h2>
       <span class="maker-badge">만든 사람 : 은두리</span>
     </div>
-    <p class="card-desc">
-      여러 반이 함께 사용하는 경우, 한 분이 <strong>대표</strong>로 과목·문항정보표·성취율 기준·피드백을 세팅한 뒤 <strong>기준 설정 파일</strong>을 내려받아 공유하면, 다른 반은 그 파일을 올려 명단만 넣고 바로 채점할 수 있습니다.
-    </p>
+
+    <div class="visual-callout amber">
+      <span class="callout-tag">⚡ 비대표 교사 빠른 안내</span>
+      <div>
+        <div class="callout-text">대표 선생님이 공유한 기준 파일(.json)을 올리면 <u>1단계 문항/기준 세팅을 건너뛰고 바로 '2단계. 학생 명단'부터</u> 넣으시면 됩니다!</div>
+        <div class="callout-sub">명단 입력/업로드 → 3단계 채점 → 4단계 통계·메일머지 엑셀 순으로 바로 이어집니다.</div>
+      </div>
+    </div>
+
+    <details class="guide-box">
+      <summary>💡 전체 진행 순서 한눈에 보기 (대표 vs 일반 반)</summary>
+      <ul>
+        <li><strong>대표 선생님</strong>: <strong>1단계</strong>에서 과목·문항 수·성취율 기준·문항정보표·피드백을 세팅하고 <strong>기준 설정 다운로드(.json)</strong>로 공유합니다.</li>
+        <li><strong>일반 반 선생님</strong>: 오른쪽 <strong>아니요, 대표가 아닙니다</strong>를 눌러 기준 파일을 올린 뒤, <strong>2단계(학생 명단)</strong>부터 우리 반 명단을 넣고 바로 채점합니다.</li>
+        <li><strong>자동 저장 안내</strong>: 입력 내용은 같은 컴퓨터·같은 브라우저에 자동 저장되며, 작업 후 <strong>전체 백업</strong>으로 `.json` 파일을 받아 두면 더 안전합니다.</li>
+      </ul>
+    </details>
 
     <div class="role-card-grid">
       <div class="role-choice-card">
         <div>
-          <h3>👑 네, 제가 대표입니다 (기준 세팅 및 다운로드)</h3>
-          <p>과목(O/X), 문항 수, 피드백(O/X), 성취율 기준, 문항정보표, 피드백 문구를 설정한 뒤 <strong>기준 설정 파일(.json)</strong>을 다운로드해 다른 반에 공유합니다.</p>
+          <h3>👑 네, 제가 대표입니다 (1단계 기준 세팅 및 공유)</h3>
+          <p><strong>1단계</strong>에서 과목(O/X), 문항 수, 피드백(O/X), 성취율 기준, 문항정보표, 피드백 문구를 세팅한 뒤 <strong>기준 설정 파일(.json)</strong>을 다운로드해 다른 반에 공유합니다.</p>
+          <span class="inline-tip">이동: 1단계(문항·기준·피드백) → 2단계(명단) → 3단계(채점) → 4단계(결과)</span>
         </div>
-        <button class="btn-primary" onclick="selectRepresentativeRole()">대표로 기준 설정 시작하기 →</button>
+        <button class="btn-primary" onclick="selectRepresentativeRole()">대표로 1단계 기준 세팅 시작하기 →</button>
       </div>
 
       <div class="role-choice-card">
         <div>
-          <h3>👥 아니요, 대표가 아닙니다 (기준 업로드 후 명단 입력)</h3>
-          <p>대표 교사가 공유한 <strong>기준 설정 파일(.json)</strong>을 업로드하면 과목·배점·피드백·성취율 기준이 자동 적용됩니다. 이후 우리 반 명단만 넣고 바로 채점을 시작합니다.</p>
+          <h3>👥 아니요, 대표가 아닙니다 (기준 파일 올리고 2단계 명단부터)</h3>
+          <p>대표 교사가 공유한 <strong>기준 설정 파일(.json)</strong>을 올리면 기준이 자동 적용되고, 곧바로 <strong>2단계(학생 명단 관리)</strong> 화면으로 이동합니다.</p>
+          <span class="inline-tip">이동: 기준 파일 적용 → 2단계(명단 넣기) → 3단계(채점) → 4단계(결과)</span>
         </div>
-        <button class="btn-success" onclick="showNonRepresentativeBox()">기준 설정 업로드 화면 열기</button>
+        <button class="btn-success" onclick="showNonRepresentativeBox()">기준 설정 업로드 후 2단계 명단부터 시작</button>
       </div>
     </div>
 
     <div id="nonRepUploadBox" class="non-rep-box">
-      <h3 style="margin:0 0 8px; font-size:1rem;">📥 대표 교사의 기준 설정 파일(.json) 업로드</h3>
+      <h3 style="margin:0 0 8px; font-size:1rem;">📥 대표 교사의 기준 설정 파일(.json) 업로드 → 바로 2단계 명단 화면으로 이동</h3>
       <p style="margin:0 0 12px; font-size:0.88rem; color:var(--gray-700);">
-        기준 파일을 선택하면 설정이 즉시 반영되며, 곧바로 <strong>학생 명단 입력 화면(2단계)</strong>으로 이동합니다.
+        기준 파일을 선택하면 과목·배점·피드백·성취율 기준이 자동 적용되며, <strong>2단계(학생 명단)</strong>부터 바로 입력·업로드하실 수 있습니다.
       </p>
       <div style="display:flex; flex-wrap:wrap; gap:10px; align-items:center;">
         <button class="btn-primary" onclick="document.getElementById('criteriaUploadInput').click()">📂 기준 설정 파일 선택 (.json)</button>
         <input type="file" id="criteriaUploadInput" class="file-input-hidden" accept=".json" onchange="uploadCriteriaJSON(event)" />
-        <button class="btn-sm" onclick="skipCriteriaToStudentList()">파일 없이 명단 입력부터 바로 시작</button>
+        <button class="btn-sm" onclick="skipCriteriaToStudentList()">파일 없이 2단계 명단 입력부터 바로 시작</button>
       </div>
     </div>
   </div>
@@ -769,19 +861,37 @@
 <!-- 메인 4단계 작업 화면 -->
 <div class="container" id="mainWorkspace" style="display:none;">
   <nav class="tabs">
-    <button class="tab-btn active" data-tab="tab1" onclick="switchTab('tab1')">1단계. 과목 · 문항 수 · 피드백 · 성취율 설정</button>
-    <button class="tab-btn" data-tab="tab2" onclick="switchTab('tab2')">2단계. 명단 · 문항정보표 · 피드백 관리</button>
+    <button class="tab-btn active" data-tab="tab1" onclick="switchTab('tab1')">1단계. 과목 · 기준 · 문항정보표 · 피드백</button>
+    <button class="tab-btn" data-tab="tab2" onclick="switchTab('tab2')">2단계. 학생 명단 관리</button>
     <button class="tab-btn" data-tab="tab3" onclick="switchTab('tab3')">3단계. 문항별 채점 입력</button>
     <button class="tab-btn" data-tab="tab4" onclick="switchTab('tab4')">4단계. 종합 결과 · 통계 · 엑셀 · 조회링크</button>
   </nav>
 
-  <!-- ==================== 1단계: 기본 설정 ==================== -->
+  <!-- ==================== 1단계: 과목 · 기준 · 문항정보표 · 피드백 ==================== -->
   <section id="tab1" class="tab-panel active">
+    <div class="visual-callout">
+      <span class="callout-tag">1단계 · 평가 설계</span>
+      <div>
+        <div class="callout-text">이곳에서 과목(O/X), 문항 수, 성취율 기준, 문항정보표, 피드백을 한 번에 세팅합니다.</div>
+        <div class="callout-sub">비대표 교사는 대표가 공유한 기준 파일(.json)을 올렸다면 1단계를 거치지 않고 <strong>2단계(학생 명단)</strong>부터 넣으시면 됩니다.</div>
+      </div>
+    </div>
+
+    <details class="guide-box">
+      <summary>💡 1단계 세부 안내 (과목 설정 · 피드백 · 성취율 · 문항정보표)</summary>
+      <ul>
+        <li><strong>과목 및 문항 수</strong>: 실시 과목을 <strong>O</strong>로 켜고 문항 수를 입력하세요.</li>
+        <li><strong>피드백 사용 여부</strong>: <strong>O</strong>로 켜면 아래에 과목별·문항별 피드백 입력 카드가 나타납니다.</li>
+        <li><strong>성취율 기준</strong>: 추천 예시 버튼을 누르거나 A·B·C 기준 점수를 정수로 입력하세요.</li>
+        <li><strong>문항정보표</strong>: 과목별 총점이 <strong>100점</strong>인지 확인하세요. 서논술형 비율은 <strong>배점 기준</strong>으로 자동 계산됩니다.</li>
+      </ul>
+    </details>
+
     <div class="card">
       <div class="card-header">
         <h2>1-1. 총괄평가 실시 과목(O/X) 및 과목별 문항 수 설정</h2>
       </div>
-      <p class="card-desc">평가할 과목을 <strong>O</strong>로 켜고 문항 수를 입력하세요. 설정 후 2단계에서 과목별 시트가 나뉜 문항정보표 및 피드백 양식을 내려받을 수 있습니다.</p>
+      <p class="card-desc">평가할 과목을 <strong>O</strong>로 켜고 문항 수를 입력하세요. 설정 후 아래 문항정보표 및 피드백 양식을 과목별 시트로 내려받을 수 있습니다.</p>
       <div class="subject-grid" id="subjectConfigGrid"></div>
     </div>
 
@@ -791,7 +901,7 @@
         <button id="feedbackToggleBtn" class="ox-toggle off" onclick="toggleFeedbackEnabled()">X</button>
       </div>
       <p class="card-desc" style="margin-bottom:0;">
-        <strong>O</strong>로 선택하면 2단계에서 <strong>과목별·문항별 피드백 + 다 맞았을 때 피드백</strong> 양식을 다운로드/업로드할 수 있으며, 틀리거나 부분 감점된 문항의 피드백이 <code>~함. ~함.</code> 형태로 자동 조합되어 메일머지 엑셀에 함께 추출됩니다.
+        <strong>O</strong>로 선택하면 아래에 <strong>과목별·문항별 피드백 + 다 맞았을 때 피드백</strong> 설정 카드가 표시되며, 틀리거나 부분 감점된 문항의 피드백이 <code>~함. ~함.</code> 형태로 자동 조합되어 메일머지 엑셀에 함께 추출됩니다.
       </p>
     </div>
 
@@ -844,17 +954,9 @@
       </div>
     </div>
 
-    <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;">
-      <button class="btn-success" onclick="downloadCriteriaJSON()">📤 기준 설정 다운로드 (.json)</button>
-      <button class="btn-primary" onclick="switchTab('tab2')">다음 단계: 명단 및 문항정보표 관리 →</button>
-    </div>
-  </section>
-
-  <!-- ==================== 2단계: 명단 · 문항정보표 · 피드백 ==================== -->
-  <section id="tab2" class="tab-panel">
     <div class="card">
       <div class="card-header">
-        <h2>2-1. 문항정보표 양식 다운로드 및 업로드 (과목별 시트 분리형)</h2>
+        <h2>1-4. 문항정보표 양식 다운로드 및 업로드 (과목별 시트 분리형)</h2>
         <div class="toolbar-group">
           <button class="btn-success" onclick="downloadCriteriaJSON()">📤 기준 설정 다운로드 (.json)</button>
           <button class="btn-primary" onclick="downloadQuestionTemplate()">📥 문항정보표 양식 다운로드 (.xlsx)</button>
@@ -863,7 +965,7 @@
         </div>
       </div>
       <p class="card-desc">
-        엑셀 양식에서 배점과 문항유형(<code>객관식</code> / <code>서논술형</code>)을 한 번에 붙여넣어 업로드하거나 아래 표에서 바로 수정하세요. <strong>총점이 100점이 아니면 빨간색</strong>으로 표시되고, <strong>서논술형 비율(30% 기준)</strong>도 별도 색상으로 표시됩니다.
+        엑셀 양식에서 배점과 문항유형(<code>객관식</code> / <code>서논술형</code>)을 한 번에 붙여넣어 업로드하거나 아래 표에서 바로 수정하세요. <strong>총점이 100점이 아니면 빨간색</strong>으로 표시되고, <strong>서논술형 비율(배점 기준 · 30% 기준)</strong>도 별도 색상으로 표시됩니다.
       </p>
 
       <div id="questionSummaryBar" style="margin-bottom:12px; display:flex; flex-wrap:wrap; gap:8px;"></div>
@@ -874,7 +976,7 @@
 
     <div class="card" id="feedbackSetupCard" style="display:none;">
       <div class="card-header">
-        <h2>2-2. 과목별·문항별 피드백 양식 다운로드 및 업로드 (과목별 시트 분리형)</h2>
+        <h2>1-5. 과목별·문항별 피드백 양식 다운로드 및 업로드 (과목별 시트 분리형)</h2>
         <div class="toolbar-group">
           <button class="btn-primary" onclick="downloadFeedbackTemplate()">📥 피드백 양식 다운로드 (.xlsx)</button>
           <button class="btn-success" onclick="document.getElementById('fbUploadInput').click()">📤 피드백 한 번에 업로드 (.xlsx)</button>
@@ -889,9 +991,34 @@
       <div id="fbEditorTableContainer"></div>
     </div>
 
+    <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;">
+      <button class="btn-success" onclick="downloadCriteriaJSON()">📤 기준 설정 다운로드 (.json)</button>
+      <button class="btn-primary" onclick="switchTab('tab2')">다음 단계: 2단계 학생 명단 관리 →</button>
+    </div>
+  </section>
+
+  <!-- ==================== 2단계: 학생 명단 관리 ==================== -->
+  <section id="tab2" class="tab-panel">
+    <div class="visual-callout amber">
+      <span class="callout-tag">2단계 · 학생 명단 넣기</span>
+      <div>
+        <div class="callout-text">비대표 교사는 기준 파일(.json)을 올린 뒤 <u>이 '2단계. 학생 명단 관리'부터 우리 반 명단을 넣으시면 됩니다!</u></div>
+        <div class="callout-sub">기본 30명 엑셀 양식을 받거나 직접 추가한 뒤, <strong>3단계(채점)</strong>로 넘어가세요.</div>
+      </div>
+    </div>
+
+    <details class="guide-box">
+      <summary>💡 2단계 명단 입력·업로드 팁</summary>
+      <ul>
+        <li><strong>30명 양식 활용</strong>: 양식 다운로드 시 1~30번 행이 나오며, 남는 행은 지우고 명단만 넣은 뒤 업로드하면 됩니다.</li>
+        <li><strong>응시/미응시/전학 구분</strong>: <strong>미응시</strong>는 해당 학생 미응시로 처리되고, <strong>전학</strong>은 통계의 총학생수에서 제외됩니다.</li>
+        <li>명단을 다 넣었으면 오른쪽 아래 <strong>다음 단계: 3단계 문항별 채점 입력</strong>을 누르세요.</li>
+      </ul>
+    </details>
+
     <div class="card">
       <div class="card-header">
-        <h2 id="studentCardTitle">2-2. 학생 명단 양식 다운로드(기본 30명) · 업로드 · 응시/미응시/전학 관리</h2>
+        <h2>2-1. 학생 명단 양식 다운로드(기본 30명) · 업로드 · 응시/미응시/전학 관리</h2>
         <div class="toolbar-group">
           <button onclick="addSingleStudent()">➕ 학생 1명 추가</button>
           <button class="btn-primary" onclick="downloadStudentTemplate()">📥 학생 명단 양식 다운로드 (30명)</button>
@@ -902,7 +1029,7 @@
       <p class="card-desc">
         양식 다운로드 시 <strong>1번~30번</strong>이 기본으로 나오며, 남는 행은 지우고 명단만 넣으면 됩니다. 응시여부 열에 <strong><code>미응시</code></strong> 또는 <strong><code>전학</code></strong>을 적으면 자동 반영됩니다. (<strong>전학</strong> 학생은 통계의 총학생수에서 제외)
       </p>
-      <div class="table-wrap" style="max-height: 420px;">
+      <div class="table-wrap" style="max-height: 440px;">
         <table>
           <thead>
             <tr>
@@ -917,17 +1044,34 @@
       </div>
     </div>
 
-    <div style="display:flex; justify-content:space-between;">
-      <button onclick="switchTab('tab1')">← 이전 단계</button>
-      <button class="btn-primary" onclick="switchTab('tab3')">다음 단계: 문항별 채점 입력 →</button>
+    <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;">
+      <button onclick="switchTab('tab1')">← 이전 단계 (1단계 설정/문항정보표)</button>
+      <button class="btn-primary" onclick="switchTab('tab3')">다음 단계: 3단계 문항별 채점 입력 →</button>
     </div>
   </section>
 
   <!-- ==================== 3단계: 문항별 채점 입력 ==================== -->
   <section id="tab3" class="tab-panel">
+    <div class="visual-callout">
+      <span class="callout-tag">3단계 · 채점 입력</span>
+      <div>
+        <div class="callout-text">객관식은 기본이 정답(O)이니 틀린 칸만 누르시고, 서논술형은 점수를 입력하세요.</div>
+        <div class="callout-sub">문항 번호 머리글을 누르면 해당 문항 전체를 한 번에 정답/오답 전환할 수 있습니다.</div>
+      </div>
+    </div>
+
+    <details class="guide-box">
+      <summary>💡 3단계 빠르게 채점하는 팁</summary>
+      <ul>
+        <li><strong>객관식</strong>: 기본값이 <strong>O(정답)</strong>이므로 틀린 학생 칸만 클릭해 <strong>X(오답)</strong>로 바꾸면 빠릅니다.</li>
+        <li><strong>서논술형</strong>: 점수를 적은 뒤 <strong>Enter</strong> 또는 <strong>위/아래 방향키</strong>로 바로 아래 학생 칸으로 이동할 수 있습니다.</li>
+        <li>과목별 탭을 눌러 실시한 과목들을 차례대로 채점하세요.</li>
+      </ul>
+    </details>
+
     <div class="card">
       <div class="card-header">
-        <h2>3단계. 과목별 문항 채점 입력</h2>
+        <h2>3-1. 과목별 문항 채점 입력</h2>
         <div class="toolbar-group">
           <button class="btn-sm" onclick="setAllStudentsPerfectCurrentSubject()">✅ 현재 과목 전원 만점 초기화</button>
         </div>
@@ -949,14 +1093,31 @@
       </div>
     </div>
 
-    <div style="display:flex; justify-content:space-between;">
-      <button onclick="switchTab('tab2')">← 이전 단계</button>
-      <button class="btn-primary" onclick="switchTab('tab4')">다음 단계: 종합 결과 및 통계 확인 →</button>
+    <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;">
+      <button onclick="switchTab('tab2')">← 이전 단계 (2단계 학생 명단)</button>
+      <button class="btn-primary" onclick="switchTab('tab4')">다음 단계: 4단계 종합 결과 및 통계 확인 →</button>
     </div>
   </section>
 
   <!-- ==================== 4단계: 종합 결과 · 통계 · 엑셀 · 조회링크 ==================== -->
   <section id="tab4" class="tab-panel">
+    <div class="visual-callout">
+      <span class="callout-tag">4단계 · 결과·통계·추출</span>
+      <div>
+        <div class="callout-text">성취수준 통계 표/엑셀, 메일머지용 엑셀, 모바일 조회 링크를 바로 확인하고 내려받을 수 있습니다.</div>
+        <div class="callout-sub">메일머지 엑셀은 <strong>등급 쭉 → 피드백 쭉 → 성취율 쭉 → 점수 쭉</strong> 순으로 정렬됩니다.</div>
+      </div>
+    </div>
+
+    <details class="guide-box">
+      <summary>💡 4단계 결과물 활용 팁</summary>
+      <ul>
+        <li><strong>메일머지용 엑셀</strong>: 등급만 복사해 쓰기 편하도록 등급 열을 앞에 쭉 모으고, 피드백·성취율·점수 순으로 배치했습니다.</li>
+        <li><strong>성취수준 통계</strong>: 전학 학생을 뺀 총학생수 기준으로 과목별 <strong>응시학생수/총학생수</strong>와 <strong>A·B·C·D</strong> 인원을 보여줍니다.</li>
+        <li><strong>모바일 조회 링크</strong>: 링크를 복사해 폰에서 열면 학생 이름을 눌러 점수·틀린 문항·피드백을 바로 볼 수 있습니다.</li>
+      </ul>
+    </details>
+
     <div class="card">
       <div class="card-header">
         <h2>4-1. 메일머지용 · 성취수준 통계 엑셀 추출 &amp; 모바일 조회 링크</h2>
@@ -1024,6 +1185,7 @@
       <div class="card-header">
         <h2>4-3. 학생별 종합 성적 일람표 (학생 이름 클릭 시 과목별 점수 · 틀린 문항 · 피드백 확인)</h2>
       </div>
+      <p class="card-desc">표에서 학생 이름을 누르면 과목별로 틀린 문항, 부분 감점 내역, 자동 조합된 피드백을 한눈에 볼 수 있습니다.</p>
       <div class="table-wrap" style="max-height: 560px;">
         <table>
           <thead id="summaryThead"></thead>
@@ -1033,7 +1195,7 @@
     </div>
 
     <div style="text-align:left;">
-      <button onclick="switchTab('tab3')">← 채점 화면으로 돌아가기</button>
+      <button onclick="switchTab('tab3')">← 채점 화면으로 돌아가기 (3단계)</button>
     </div>
   </section>
 </div>
@@ -1056,7 +1218,7 @@
 
 <script>
   const SUBJECTS = ['국어', '수학', '사회', '과학', '영어'];
-  const STORAGE_KEY = 'summative_eval_app_v6';
+  const STORAGE_KEY = 'summative_eval_app_v7';
 
   function getDefaultState() {
     return {
@@ -1124,7 +1286,7 @@
     if (!parsed || typeof parsed !== 'object') return fresh;
 
     fresh.role = parsed.role || null;
-    fresh.activeTab = parsed.activeTab || 'tab1';
+    fresh.activeTab = ['tab1', 'tab2', 'tab3', 'tab4'].includes(parsed.activeTab) ? parsed.activeTab : 'tab1';
     fresh.feedbackEnabled = Boolean(parsed.feedbackEnabled);
 
     if (parsed.cutlines && typeof parsed.cutlines === 'object') {
@@ -1466,7 +1628,7 @@
     } else {
       gate.style.display = 'none';
       workspace.style.display = 'block';
-      badge.textContent = '👥 일반 반 교사 모드';
+      badge.textContent = '👥 일반 반 교사 모드 (2단계 명단부터 입력)';
       dlBtn.style.display = 'none';
     }
   }
@@ -1582,7 +1744,7 @@
         applyActiveTabUI('tab2');
         updateRoleView();
         renderAll();
-        alert('기준 설정이 적용되었습니다! 우리 반 학생 명단을 입력하거나 업로드한 뒤 채점을 시작하세요.');
+        alert('기준 설정이 적용되었습니다! [2단계. 학생 명단 관리]에서 우리 반 명단을 넣은 뒤 채점을 시작하세요.');
       } catch (err) {
         alert('기준 파일 불러오기 오류: ' + err.message);
       }
@@ -1635,20 +1797,49 @@
     return enabled.length > 0 ? enabled : ['국어'];
   }
 
- function getSubjectComposition(sub) {
-  const qs = state.subjects[sub].questions;
-  const totalCount = qs.length;
-  const totalPoints = Math.round(qs.reduce((acc, q) => acc + (Number(q.points) || 0), 0) * 10) / 10;
-  const essayQuestions = qs.filter(q => q.type === '서논술형');
-  const essayCount = essayQuestions.length;
-  const essayPoints = Math.round(essayQuestions.reduce((acc, q) => acc + (Number(q.points) || 0), 0) * 10) / 10;
-  const essayRate = totalPoints > 0 ? Math.round((essayPoints / totalPoints) * 100) : 0;
-  const isHundred = Math.abs(totalPoints - 100) < 0.01;
-  const essayMeets30 = essayRate >= 30;
-  return { totalCount, totalPoints, essayCount, essayPoints, essayRate, isHundred, essayMeets30 };
-}
+  // 서논술형 비율은 배점(점수) 기준
+  function getSubjectComposition(sub) {
+    const qs = state.subjects[sub].questions;
+    const totalCount = qs.length;
+    const totalPoints = Math.round(qs.reduce((acc, q) => acc + (Number(q.points) || 0), 0) * 10) / 10;
+    const essayQuestions = qs.filter(q => q.type === '서논술형');
+    const essayCount = essayQuestions.length;
+    const essayPoints = Math.round(essayQuestions.reduce((acc, q) => acc + (Number(q.points) || 0), 0) * 10) / 10;
+    const essayRate = totalPoints > 0 ? Math.round((essayPoints / totalPoints) * 100) : 0;
+    const isHundred = Math.abs(totalPoints - 100) < 0.01;
+    const essayMeets30 = essayRate >= 30;
+    return { totalCount, totalPoints, essayCount, essayPoints, essayRate, isHundred, essayMeets30 };
+  }
 
-  // ==================== 1단계 렌더링 및 핸들러 ====================
+  // ==================== 1단계: 과목 · 기준 · 문항정보표 · 피드백 ====================
+  function renderQuestionMetricsOnly(sub) {
+    const comp = getSubjectComposition(sub);
+    const strip = document.getElementById('qMetricsStrip');
+    strip.innerHTML = `
+      <span class="status-pill ${comp.isHundred ? 'status-ok' : 'status-err'}">
+        총점: ${comp.totalPoints}점 ${comp.isHundred ? '(100점 충족)' : '(⚠️ 100점 아님!)'}
+      </span>
+      <span class="status-pill ${comp.essayMeets30 ? 'essay-ok' : 'essay-low'}">
+        서논술형 배점: ${comp.essayPoints}점 / ${comp.totalPoints}점 (${comp.essayRate}%)
+        ${comp.essayMeets30 ? '· 30% 이상 충족' : '· 30% 미만'}
+      </span>
+    `;
+
+    const summaryBar = document.getElementById('questionSummaryBar');
+    const enabled = getEnabledSubjects();
+    summaryBar.innerHTML = enabled.map(s => {
+      const c = getSubjectComposition(s);
+      return `
+        <span class="status-pill ${c.isHundred ? 'status-ok' : 'status-err'}">
+          ${s}: 총점 ${c.totalPoints}점 ${c.isHundred ? '✓' : '⚠️'}
+        </span>
+        <span class="status-pill ${c.essayMeets30 ? 'essay-ok' : 'essay-low'}">
+          서논술 ${c.essayPoints}점(${c.essayRate}%)
+        </span>
+      `;
+    }).join('');
+  }
+
   function renderStep1() {
     const grid = document.getElementById('subjectConfigGrid');
     grid.innerHTML = SUBJECTS.map(sub => {
@@ -1683,6 +1874,123 @@
     document.getElementById('labelBMax').textContent = Math.round(state.cutlines.A);
     document.getElementById('labelCMax').textContent = Math.round(state.cutlines.B);
     document.getElementById('labelDMax').textContent = Math.round(state.cutlines.C);
+
+    const enabled = getEnabledSubjects();
+    if (!enabled.includes(state.activeQEditorSubject)) {
+      state.activeQEditorSubject = enabled[0];
+    }
+    if (!enabled.includes(state.activeFbEditorSubject)) {
+      state.activeFbEditorSubject = enabled[0];
+    }
+
+    const curSub = state.activeQEditorSubject;
+    renderQuestionMetricsOnly(curSub);
+
+    document.getElementById('qEditorSubTabs').innerHTML = enabled.map(sub => `
+      <button class="sub-tab-btn ${state.activeQEditorSubject === sub ? 'active' : ''}"
+        onclick="state.activeQEditorSubject='${sub}'; renderStep1();">
+        ${sub} 문항정보표
+      </button>
+    `).join('');
+
+    const qs = state.subjects[curSub].questions;
+    document.getElementById('qEditorTableContainer').innerHTML = `
+      <div class="table-wrap" style="max-height: 360px;">
+        <table>
+          <thead>
+            <tr>
+              <th style="width:100px;">문항번호</th>
+              <th style="width:180px;">문항유형 (기본: 객관식)</th>
+              <th style="width:150px;">배점</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${qs.map((q, idx) => `
+              <tr>
+                <td><strong>${q.num}번</strong></td>
+                <td>
+                  <select onchange="updateQuestionTypeNoScroll('${curSub}', ${idx}, this.value)">
+                    <option value="객관식" ${q.type === '객관식' ? 'selected' : ''}>객관식</option>
+                    <option value="서논술형" ${q.type === '서논술형' ? 'selected' : ''}>서논술형</option>
+                  </select>
+                </td>
+                <td>
+                  <input type="number" step="0.5" min="0.5" max="100" value="${q.points}" style="width:90px; text-align:center;"
+                    onchange="updateQuestionPointsNoScroll('${curSub}', ${idx}, this.value)" /> 점
+                </td>
+              </tr>
+            `).join('')}
+          </tbody>
+        </table>
+      </div>
+    `;
+
+    const fbCard = document.getElementById('feedbackSetupCard');
+    if (state.feedbackEnabled) {
+      fbCard.style.display = 'block';
+
+      document.getElementById('feedbackSummaryBar').innerHTML = enabled.map(sub => {
+        const subQs = state.subjects[sub].questions;
+        const filled = subQs.filter(q => (q.feedback || '').trim().length > 0).length;
+        const hasPerfect = (state.subjects[sub].perfectFeedback || '').trim().length > 0;
+        const isComplete = filled === subQs.length && hasPerfect;
+        return `
+          <span class="status-pill ${isComplete ? 'status-ok' : 'status-err'}">
+            ${sub}: 문항 피드백 ${filled}/${subQs.length}개 · 만점 피드백 ${hasPerfect ? '입력됨 ✓' : '미입력'}
+          </span>
+        `;
+      }).join('');
+
+      document.getElementById('fbEditorSubTabs').innerHTML = enabled.map(sub => `
+        <button class="sub-tab-btn ${state.activeFbEditorSubject === sub ? 'active' : ''}"
+          onclick="state.activeFbEditorSubject='${sub}'; renderStep1();">
+          ${sub} 피드백
+        </button>
+      `).join('');
+
+      const curFbSub = state.activeFbEditorSubject;
+      const fbQs = state.subjects[curFbSub].questions;
+      const perfectFb = state.subjects[curFbSub].perfectFeedback || '';
+      document.getElementById('fbEditorTableContainer').innerHTML = `
+        <div class="table-wrap" style="max-height: 380px;">
+          <table>
+            <thead>
+              <tr>
+                <th style="width:120px;">구분</th>
+                <th style="width:110px;">문항유형</th>
+                <th>피드백 문구 (예: 글의 중심 내용을 파악함)</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${fbQs.map((q, idx) => `
+                <tr>
+                  <td><strong>${q.num}번</strong></td>
+                  <td id="fbTypeCell_${curFbSub}_${idx}">${q.type}</td>
+                  <td style="text-align:left;">
+                    <input type="text" value="${escapeHtml(q.feedback || '')}"
+                      placeholder="${q.num}번 문항 오답/감점 시 들어갈 피드백 입력"
+                      style="width:100%;"
+                      onchange="updateSingleFeedback('${curFbSub}', ${idx}, this.value)" />
+                  </td>
+                </tr>
+              `).join('')}
+              <tr style="background:#fef3c7;">
+                <td><strong>다 맞았을 때</strong></td>
+                <td>만점</td>
+                <td style="text-align:left;">
+                  <input type="text" value="${escapeHtml(perfectFb)}"
+                    placeholder="모든 문항을 맞혔을 때 들어갈 칭찬·종합 피드백 입력"
+                    style="width:100%;"
+                    onchange="updatePerfectFeedback('${curFbSub}', this.value)" />
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      `;
+    } else {
+      fbCard.style.display = 'none';
+    }
   }
 
   function toggleSubject(sub) {
@@ -1738,156 +2046,8 @@
     renderAll();
   }
 
-  // ==================== 2단계: 문항정보표 · 피드백 · 명단 관리 ====================
-  function renderQuestionMetricsOnly(sub) {
-    const comp = getSubjectComposition(sub);
-    const strip = document.getElementById('qMetricsStrip');
-    strip.innerHTML = `
-      <span class="status-pill ${comp.isHundred ? 'status-ok' : 'status-err'}">
-        총점: ${comp.totalPoints}점 ${comp.isHundred ? '(100점 충족)' : '(⚠️ 100점 아님!)'}
-      </span>
-      <span class="status-pill ${comp.essayMeets30 ? 'essay-ok' : 'essay-low'}">
-        서논술형: ${comp.essayCount}문항 / ${comp.totalCount}문항 (${comp.essayRate}%)
-        ${comp.essayMeets30 ? '· 30% 이상 충족' : '· 30% 미만'}
-      </span>
-    `;
-
-    const summaryBar = document.getElementById('questionSummaryBar');
-    const enabled = getEnabledSubjects();
-    summaryBar.innerHTML = enabled.map(s => {
-      const c = getSubjectComposition(s);
-      return `
-        <span class="status-pill ${c.isHundred ? 'status-ok' : 'status-err'}">
-          ${s}: 총점 ${c.totalPoints}점 ${c.isHundred ? '✓' : '⚠️'}
-        </span>
-        <span class="status-pill ${c.essayMeets30 ? 'essay-ok' : 'essay-low'}">
-          서논술 ${c.essayCount}문항(${c.essayRate}%)
-        </span>
-      `;
-    }).join('');
-  }
-
+  // ==================== 2단계: 학생 명단 관리 ====================
   function renderStep2() {
-    const enabled = getEnabledSubjects();
-    if (!enabled.includes(state.activeQEditorSubject)) {
-      state.activeQEditorSubject = enabled[0];
-    }
-    if (!enabled.includes(state.activeFbEditorSubject)) {
-      state.activeFbEditorSubject = enabled[0];
-    }
-
-    const curSub = state.activeQEditorSubject;
-    renderQuestionMetricsOnly(curSub);
-
-    document.getElementById('qEditorSubTabs').innerHTML = enabled.map(sub => `
-      <button class="sub-tab-btn ${state.activeQEditorSubject === sub ? 'active' : ''}"
-        onclick="state.activeQEditorSubject='${sub}'; renderStep2();">
-        ${sub} 문항정보표
-      </button>
-    `).join('');
-
-    const qs = state.subjects[curSub].questions;
-    document.getElementById('qEditorTableContainer').innerHTML = `
-      <div class="table-wrap" style="max-height: 360px;">
-        <table>
-          <thead>
-            <tr>
-              <th style="width:100px;">문항번호</th>
-              <th style="width:180px;">문항유형 (기본: 객관식)</th>
-              <th style="width:150px;">배점</th>
-            </tr>
-          </thead>
-          <tbody>
-            ${qs.map((q, idx) => `
-              <tr>
-                <td><strong>${q.num}번</strong></td>
-                <td>
-                  <select onchange="updateQuestionTypeNoScroll('${curSub}', ${idx}, this.value)">
-                    <option value="객관식" ${q.type === '객관식' ? 'selected' : ''}>객관식</option>
-                    <option value="서논술형" ${q.type === '서논술형' ? 'selected' : ''}>서논술형</option>
-                  </select>
-                </td>
-                <td>
-                  <input type="number" step="0.5" min="0.5" max="100" value="${q.points}" style="width:90px; text-align:center;"
-                    onchange="updateQuestionPointsNoScroll('${curSub}', ${idx}, this.value)" /> 점
-                </td>
-              </tr>
-            `).join('')}
-          </tbody>
-        </table>
-      </div>
-    `;
-
-    const fbCard = document.getElementById('feedbackSetupCard');
-    const studentTitle = document.getElementById('studentCardTitle');
-    if (state.feedbackEnabled) {
-      fbCard.style.display = 'block';
-      studentTitle.textContent = '2-3. 학생 명단 양식 다운로드(기본 30명) · 업로드 · 응시/미응시/전학 관리';
-
-      document.getElementById('feedbackSummaryBar').innerHTML = enabled.map(sub => {
-        const subQs = state.subjects[sub].questions;
-        const filled = subQs.filter(q => (q.feedback || '').trim().length > 0).length;
-        const hasPerfect = (state.subjects[sub].perfectFeedback || '').trim().length > 0;
-        const isComplete = filled === subQs.length && hasPerfect;
-        return `
-          <span class="status-pill ${isComplete ? 'status-ok' : 'status-err'}">
-            ${sub}: 문항 피드백 ${filled}/${subQs.length}개 · 만점 피드백 ${hasPerfect ? '입력됨 ✓' : '미입력'}
-          </span>
-        `;
-      }).join('');
-
-      document.getElementById('fbEditorSubTabs').innerHTML = enabled.map(sub => `
-        <button class="sub-tab-btn ${state.activeFbEditorSubject === sub ? 'active' : ''}"
-          onclick="state.activeFbEditorSubject='${sub}'; renderStep2();">
-          ${sub} 피드백
-        </button>
-      `).join('');
-
-      const curFbSub = state.activeFbEditorSubject;
-      const fbQs = state.subjects[curFbSub].questions;
-      const perfectFb = state.subjects[curFbSub].perfectFeedback || '';
-      document.getElementById('fbEditorTableContainer').innerHTML = `
-        <div class="table-wrap" style="max-height: 380px;">
-          <table>
-            <thead>
-              <tr>
-                <th style="width:120px;">구분</th>
-                <th style="width:110px;">문항유형</th>
-                <th>피드백 문구 (예: 글의 중심 내용을 파악함)</th>
-              </tr>
-            </thead>
-            <tbody>
-              ${fbQs.map((q, idx) => `
-                <tr>
-                  <td><strong>${q.num}번</strong></td>
-                  <td id="fbTypeCell_${curFbSub}_${idx}">${q.type}</td>
-                  <td style="text-align:left;">
-                    <input type="text" value="${escapeHtml(q.feedback || '')}"
-                      placeholder="${q.num}번 문항 오답/감점 시 들어갈 피드백 입력"
-                      style="width:100%;"
-                      onchange="updateSingleFeedback('${curFbSub}', ${idx}, this.value)" />
-                  </td>
-                </tr>
-              `).join('')}
-              <tr style="background:#fef3c7;">
-                <td><strong>다 맞았을 때</strong></td>
-                <td>만점</td>
-                <td style="text-align:left;">
-                  <input type="text" value="${escapeHtml(perfectFb)}"
-                    placeholder="모든 문항을 맞혔을 때 들어갈 칭찬·종합 피드백 입력"
-                    style="width:100%;"
-                    onchange="updatePerfectFeedback('${curFbSub}', this.value)" />
-                </td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-      `;
-    } else {
-      fbCard.style.display = 'none';
-      studentTitle.textContent = '2-2. 학생 명단 양식 다운로드(기본 30명) · 업로드 · 응시/미응시/전학 관리';
-    }
-
     const sBody = document.getElementById('studentListBody');
     sBody.innerHTML = state.students.map((stu, idx) => {
       const st = normalizeStudentStatus(stu);
@@ -2321,7 +2481,7 @@
         <strong>[${curSub}]</strong>
         <span>총 ${qs.length}문항</span>
         <span class="status-pill ${comp.isHundred ? 'status-ok' : 'status-err'}">만점: ${comp.totalPoints}점</span>
-        <span class="status-pill ${comp.essayMeets30 ? 'essay-ok' : 'essay-low'}">서논술 ${comp.essayCount}문항(${comp.essayRate}%)</span>
+        <span class="status-pill ${comp.essayMeets30 ? 'essay-ok' : 'essay-low'}">서논술 ${comp.essayPoints}점(${comp.essayRate}%)</span>
         <span>응시: <strong>${activeStudents.length}명</strong></span>
       </div>
       <div class="helper-text">※ 문항 번호 머리글 클릭 시 전체 정답/오답 일괄 전환 (정답률 1단위 정수)</div>
@@ -2669,7 +2829,6 @@
   }
 
   // ==================== 엑셀 추출 ====================
-  // 열 순서: 번호, 이름 -> 등급 쭉 -> (피드백 쭉) -> (성취율 쭉) -> (점수 쭉, 가장 마지막)
   function exportMailMergeExcel() {
     const enabled = getEnabledSubjects();
     const incScore = document.getElementById('mmIncludeScore').checked;
